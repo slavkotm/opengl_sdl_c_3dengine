@@ -1,1 +1,6 @@
-# opengl_sdl_c_3dengine
+Linux/Ubuntu:
+
+    compile project:
+    $ make
+    run project:
+    $ make run
