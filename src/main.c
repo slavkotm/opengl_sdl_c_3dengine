@@ -91,6 +91,8 @@ int main(int argc,
     gsl_vector_set(c, 2, 0);
 
     gsl_matrix *model = camera_get_model_matrix();
+    gsl_matrix *model1 = camera_get_model_matrix();
+    gsl_matrix *model2 = camera_get_model_matrix();
 
     struct shader *shaders = shader_malloc();
 
@@ -146,6 +148,8 @@ int main(int argc,
     glad_glBindVertexArray(0);
 
     double angle = 45.0;
+    double move = 0;
+    double move1 = 0;
 
     glad_glEnable(GL_DEPTH_TEST);  
     /*glad_glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);*/
@@ -164,9 +168,7 @@ int main(int argc,
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         gsl_matrix *pv = gsl_matrix_alloc(4, 4);
-        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, (double)1, camera_get_projection_matrix(item_camera), 
-
-        camera_get_view_matrix(item_camera), 0, pv);
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, (double)1, camera_get_projection_matrix(item_camera), camera_get_view_matrix(item_camera), 0, pv);
 
         GLfloat a[16]; 
         matrix_to_array(camera_get_view_matrix(item_camera), a, 4, 4);
@@ -192,6 +194,51 @@ int main(int argc,
         angle += 1.0;
 
         glad_glBindVertexArray(VAO);
+        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
+
+        GLfloat mm[16];
+        matrix_to_array(model1, mm, 4, 4);
+
+        GLuint transformLoc1 = glad_glGetUniformLocation(get_id(shaders), "model");
+        glad_glUniformMatrix4fv(transformLoc1, 1, GL_FALSE, (const GLfloat *)mm);
+        GLuint view1 = glad_glGetUniformLocation(get_id(shaders), "view");
+        glad_glUniformMatrix4fv(view1, 1, GL_FALSE,(const GLfloat *)a);
+        GLuint projection1 = glad_glGetUniformLocation(get_id(shaders), "projection");
+        glad_glUniformMatrix4fv(projection1, 1, GL_FALSE, (const GLfloat *)p);
+
+        matrix_set_value(model1, 3, 0, move1);
+        matrix_set_value(model1, 3, 1, move1);
+        move1 += 0.001;
+        //matrix_set_value(model1, 3, 1, 5.0f);
+        //matrix_set_value(model1, 3, 2, -15.0f);
+
+//        glad_glBindVertexArray(VAO);
+        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
+
+
+
+        GLfloat mmm[16];
+        matrix_to_array(model2, mmm, 4, 4);
+
+        GLuint transformLoc2 = glad_glGetUniformLocation(get_id(shaders), "model");
+        glad_glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, (const GLfloat *)mmm);
+        GLuint view2 = glad_glGetUniformLocation(get_id(shaders), "view");
+        glad_glUniformMatrix4fv(view2, 1, GL_FALSE,(const GLfloat *)a);
+        GLuint projection2 = glad_glGetUniformLocation(get_id(shaders), "projection");
+        glad_glUniformMatrix4fv(projection2, 1, GL_FALSE, (const GLfloat *)p);
+
+        matrix_set_value(model2, 3, 0, move);
+        matrix_set_value(model2, 3, 1, move);
+        matrix_set_value(model2, 3, 2, move);
+        move += 0.01;
+        //matrix_set_value(model1, 3, 1, 5.0f);
+        //matrix_set_value(model1, 3, 2, -15.0f);
+
+//        glad_glBindVertexArray(VAO);
         glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         SDL_GL_SwapWindow(window);
