@@ -63,10 +63,12 @@ double camera_radians(double);
 
 void camera_update_vectors(struct camera *);
 
-struct camera *camera_destroy(struct camera *);
+void camera_destroy(struct camera *);
 
 struct camera *camera_malloc();
 
 gsl_vector *camera_get_vector_front(struct camera *);
+
+void camera_set_polygon_mode(bool);
 
 #endif

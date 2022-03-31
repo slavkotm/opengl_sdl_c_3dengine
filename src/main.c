@@ -1,11 +1,12 @@
+#include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
+
 #include "../include/glad/glad.h"
 #include "../include/SDL2/SDL.h" 
 #include "../include/GL/gl.h"
 #include "../include/gsl/gsl_blas.h"
 #include "../include/gsl/gsl_matrix_double.h"
-#include <stdio.h>
-#include <math.h>
-#include <stdbool.h>
 #include "../header/read.h"
 #include "../header/shader.h"
 #include "../header/init.h"
@@ -14,6 +15,7 @@
 #include "../header/event.h"
 #include "../header/vector.h"
 #include "../header/camera.h"
+
 #define PI 3.141592654
 
 int main(int argc, 
@@ -72,7 +74,8 @@ int main(int argc,
                0,
                0,
                0,
-               0);
+               0,
+               false);
 
 
     gsl_vector *a = gsl_vector_alloc(3);
@@ -152,7 +155,6 @@ int main(int argc,
     double move1 = 0;
 
     glad_glEnable(GL_DEPTH_TEST);  
-    /*glad_glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);*/
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -163,6 +165,7 @@ int main(int argc,
         event_handle(item_event);
         camera_move(item_camera, event_get_dir(item_event));
         camera_rotate(item_camera, event_get_x_off_set(item_event), -event_get_y_off_set(item_event));
+        camera_set_polygon_mode(event_get_space(item_event));
                 
         glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -211,8 +214,6 @@ int main(int argc,
         matrix_set_value(model1, 3, 0, move1);
         matrix_set_value(model1, 3, 1, move1);
         move1 += 0.001;
-        //matrix_set_value(model1, 3, 1, 5.0f);
-        //matrix_set_value(model1, 3, 2, -15.0f);
 
 //        glad_glBindVertexArray(VAO);
         glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
@@ -235,18 +236,16 @@ int main(int argc,
         matrix_set_value(model2, 3, 1, move);
         matrix_set_value(model2, 3, 2, move);
         move += 0.01;
-        //matrix_set_value(model1, 3, 1, 5.0f);
-        //matrix_set_value(model1, 3, 2, -15.0f);
-
 //        glad_glBindVertexArray(VAO);
         glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
         SDL_GL_SwapWindow(window);
     }
 
-    printf("%s\n", glGetString(GL_VERSION));
-
-    free(shaders);
+    event_destroy(item_event);
+    shader_destroy(shaders);
+    camera_destroy(item_camera);
+    free(item_camera);
 
     glad_glDeleteVertexArrays(1, &VAO);
     glad_glDeleteBuffers(1, &VBO); 

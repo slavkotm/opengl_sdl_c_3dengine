@@ -20,6 +20,15 @@ struct camera
     double sensitivity;
 };
 
+void camera_destroy(struct camera *item_camera)
+{
+    gsl_vector_free(item_camera->position);
+    gsl_vector_free(item_camera->front);
+    gsl_vector_free(item_camera->up);
+    gsl_vector_free(item_camera->right);
+    gsl_vector_free(item_camera->world_up);
+};
+
 struct camera *camera_malloc() 
 { 
     return (struct camera *)malloc(sizeof(struct camera));
@@ -206,4 +215,12 @@ double camera_radians(double degree) { return (degree * M_PI) / (double)180; };
 gsl_vector *camera_get_vector_front(struct camera *item_camera)
 {
     return item_camera->front;
+};
+
+void camera_set_polygon_mode(bool flag)
+{
+    if(flag)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 };

@@ -18,6 +18,8 @@ struct event
 
     double x_off_set;
     double y_off_set;
+
+    bool space;
 };
 
 struct event *event_malloc() 
@@ -34,7 +36,8 @@ void event_init(struct event *item_event,
                 double item_old_x,
                 double item_old_y,
                 double item_x_off_set,
-                double item_y_off_set)
+                double item_y_off_set,
+                bool item_space)
 {
     item_event->item_camera = item_camera;
 
@@ -50,6 +53,8 @@ void event_init(struct event *item_event,
 
     item_event->x_off_set = item_x_off_set;
     item_event->y_off_set = item_y_off_set;
+
+    item_event->space = item_space;
 };
 
 bool event_get_running(struct event *item_event) { return item_event->running; };
@@ -66,10 +71,22 @@ void event_handle(struct event *item_event)
 
     while(SDL_PollEvent(&item_event->event))
     {
+        if(item_event->event.type == SDL_KEYDOWN)
+        {
+            if(item_event->event.key.keysym.sym == SDLK_SPACE)
+            {
+                item_event->space = !item_event->space;
+            }
+        }
         if(item_event->event.type == SDL_MOUSEMOTION)
         {
             item_event->new_x = item_event->event.motion.xrel;
             item_event->new_y = item_event->event.motion.yrel;
+        }
+        if(item_event->event.type == SDL_MOUSEWHEEL)
+        {
+            camera_change_fov(item_event->item_camera, 
+                              item_event->event.wheel.y);
         }
     }
 
@@ -87,7 +104,7 @@ void event_handle(struct event *item_event)
 
     if(key_state[SDL_SCANCODE_ESCAPE])
         item_event->running = false;
-    
+
     item_event->old_x = item_event->old_y = 0;
 
     item_event->x_off_set = item_event->new_x - item_event->old_x;
@@ -108,3 +125,5 @@ double event_get_y_off_set(struct event *item_event)
 {
     return item_event->y_off_set;
 };
+
+bool event_get_space(struct event *item_event) { return item_event->space; };
