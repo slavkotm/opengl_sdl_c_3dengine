@@ -92,7 +92,7 @@ int main(int argc,
 
     struct shader *shaders = shader_malloc();
 
-    shader_init(shaders, "shaders/basic.vert", "shaders/basic.frag", "r");
+    shader_init(shaders, "shaders/basic_v.glsl", "shaders/basic_f.glsl", "r");
 
 
     GLfloat vertex[] = {
