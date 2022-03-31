@@ -16,12 +16,24 @@ gsl_matrix *matrix_perspective(double,
                                double,
                                double);
 
+gsl_matrix *matrix_model();
+
+void matrix_set_value(gsl_matrix *,
+                      int,
+                      int,
+                      double);
+
 void matrix_destroy(gsl_matrix *);
 
 void matrix_get_float(gsl_matrix *,
                       float **matrixf,
                       int ,
                       int);
+
+float *matrix_to_array(gsl_matrix *,
+                       float *,
+                       int,
+                       int);
 
 void matrix_print(gsl_matrix *,
                   int ,

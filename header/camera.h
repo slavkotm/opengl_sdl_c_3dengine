@@ -45,6 +45,8 @@ void camera_constructor_assignment(struct camera *,
 
 gsl_matrix *camera_get_view_matrix(struct camera *);
 
+gsl_matrix *camera_get_model_matrix();
+
 gsl_matrix *camera_get_projection_matrix(struct camera *);
 
 void camera_move(struct camera *, 

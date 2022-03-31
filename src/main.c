@@ -90,6 +90,8 @@ int main(int argc,
     gsl_vector_set(c, 1, 1);
     gsl_vector_set(c, 2, 0);
 
+    gsl_matrix *model = camera_get_model_matrix();
+
     struct shader *shaders = shader_malloc();
 
     shader_init(shaders, "shaders/basic_v.glsl", "shaders/basic_f.glsl", "r");
@@ -147,32 +149,6 @@ int main(int argc,
 
     glad_glEnable(GL_DEPTH_TEST);  
     /*glad_glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);*/
-    GLfloat r = 0.2f, g = 0.3f, b = 0.3f;
-
-    float **mmp = malloc(4 * sizeof(float*));
-
-    for(int i = 0; i < 4; i++)
-        mmp[i] = malloc(4 * sizeof(float));
-
-
-    float **mmv = malloc(4 * sizeof(float*));
-
-    for(int i = 0; i < 4; i++)
-        mmv[i] = malloc(4 * sizeof(float));
-
-    float **mmm = malloc(4 * sizeof(float*));
-
-    for(int i = 0; i < 4; i++)
-        mmm[i] = malloc(4 * sizeof(float));
-
-    for(int i = 0; i < 4; i++)
-        for(int j = 0; j < 4; j++)
-            mmm[i][j] = 0;
-
-    mmm[0][0] = 1;
-    mmm[1][1] = 1;
-    mmm[2][2] = 1;
-    mmm[3][3] = 1;
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -184,7 +160,7 @@ int main(int argc,
         camera_move(item_camera, event_get_dir(item_event));
         camera_rotate(item_camera, event_get_x_off_set(item_event), -event_get_y_off_set(item_event));
                 
-        glad_glClearColor(r, g, b, 1.0f);
+        glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         gsl_matrix *pv = gsl_matrix_alloc(4, 4);
@@ -192,76 +168,27 @@ int main(int argc,
 
         camera_get_view_matrix(item_camera), 0, pv);
 
-        matrix_get_float(camera_get_view_matrix(item_camera), (float **)mmv, 4, 4);
-        matrix_get_float(camera_get_projection_matrix(item_camera), (float **)mmp, 4, 4);
-
         GLfloat a[16]; 
-        a[0] = mmv[0][0];
-        a[1] = mmv[0][1];
-        a[2] = mmv[0][2];
-        a[3] = mmv[0][3];
-        a[4] = mmv[1][0];
-        a[5] = mmv[1][1];
-        a[6] = mmv[1][2];
-        a[7] = mmv[1][3];
-        a[8] = mmv[2][0];
-        a[9] = mmv[2][1];
-        a[10] = mmv[2][2];
-        a[11] = mmv[2][3];
-        a[12] = mmv[3][0];
-        a[13] = mmv[3][1];
-        a[14] = mmv[3][2];
-        a[15] = mmv[3][3];
-
-        GLfloat ammm[16];
-        ammm[0] = mmm[0][0];
-        ammm[1] = mmm[0][1];
-        ammm[2] = mmm[0][2];
-        ammm[3] = mmm[0][3];
-        ammm[4] = mmm[1][0];
-        ammm[5] = mmm[1][1];
-        ammm[6] = mmm[1][2];
-        ammm[7] = mmm[1][3];
-        ammm[8] = mmm[2][0];
-        ammm[9] = mmm[2][1];
-        ammm[10] = mmm[2][2];
-        ammm[11] = mmm[2][3];
-        ammm[12] = mmm[3][0];
-        ammm[13] = mmm[3][1];
-        ammm[14] = mmm[3][2];
-        ammm[15] = mmm[3][3];
-
-
+        matrix_to_array(camera_get_view_matrix(item_camera), a, 4, 4);
+        
         GLfloat p[16];
-        p[0] = mmp[0][0];
-        p[1] = mmp[0][1];
-        p[2] = mmp[0][2];
-        p[3] = mmp[0][3];
-        p[4] = mmp[1][0];
-        p[5] = mmp[1][1];
-        p[6] = mmp[1][2];
-        p[7] = mmp[1][3];
-        p[8] = mmp[2][0];
-        p[9] = mmp[2][1];
-        p[10] = mmp[2][2];
-        p[11] = mmp[2][3];
-        p[12] = mmp[3][0];
-        p[13] = mmp[3][1];
-        p[14] = mmp[3][2];
-        p[15] = mmp[3][3];
+        matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
+
+        GLfloat m[16];
+        matrix_to_array(model, m, 4, 4);
 
         shader_use(shaders);
         GLuint transformLoc = glad_glGetUniformLocation(get_id(shaders), "model");
-        glad_glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (const GLfloat *)ammm);
+        glad_glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (const GLfloat *)m);
         GLuint view = glad_glGetUniformLocation(get_id(shaders), "view");
         glad_glUniformMatrix4fv(view, 1, GL_FALSE,(const GLfloat *)a);
         GLuint projection = glad_glGetUniformLocation(get_id(shaders), "projection");
         glad_glUniformMatrix4fv(projection, 1, GL_FALSE, (const GLfloat *)p);
 
-        mmm[1][1] = cos(PI * angle / 180);
-        mmm[2][1] = sin(PI * angle / 180);
-        mmm[1][2] = -sin(PI * angle / 180);
-        mmm[2][2] = cos(PI * angle / 180);
+        matrix_set_value(model, 1, 1, cos(PI * angle / 180));
+        matrix_set_value(model, 2, 1, sin(PI * angle / 180));
+        matrix_set_value(model, 1, 2,-sin(PI * angle / 180));
+        matrix_set_value(model, 2, 2, cos(PI * angle / 180));
         angle += 1.0;
 
         glad_glBindVertexArray(VAO);

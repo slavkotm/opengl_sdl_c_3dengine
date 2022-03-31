@@ -102,16 +102,23 @@ gsl_matrix *camera_get_projection_matrix(struct camera *item_camera)
                               item_camera->zfar);
 };
 
+gsl_matrix *camera_get_model_matrix() { return matrix_model(); };
+
 void camera_move(struct camera *item_camera, 
                  int32_t dirs)
 {
     double velocity = item_camera->movement_speed;
+
     gsl_vector *direction = gsl_vector_alloc(3);
+
     gsl_vector_set_zero(direction);
+
     bool flag = false;
 
     gsl_vector_set(direction, 2, (double)((dirs & CAMERA_FORWARD)) / CAMERA_FORWARD - (double)((dirs & CAMERA_BACKWARD)) / CAMERA_BACKWARD);
+
     gsl_vector_set(direction, 0, (double)((dirs & CAMERA_RIGHT)) / CAMERA_RIGHT - (double)((dirs & CAMERA_LEFT)) / CAMERA_LEFT);
+
     gsl_vector_set(direction, 1, (double)((dirs & CAMERA_UP)) / CAMERA_UP - (double)((dirs & CAMERA_DOWN)) / CAMERA_DOWN);
 
     for(int i = 0; i < 3; i++)
@@ -153,6 +160,7 @@ void camera_rotate(struct camera *item_camera,
 
     if(item_camera->pitch > (double)89)
         item_camera->pitch = (double)89;
+
     if(item_camera->pitch < (double)-89)
         item_camera->pitch = (double)-89;
 
@@ -163,24 +171,32 @@ void camera_change_fov(struct camera *item_camera,
                        double value)
 {
     item_camera->fov -= value;
+
     if(item_camera->fov < (double)1)
         item_camera->fov = (double)1;
+
     if(item_camera->fov > (double)120)
         item_camera->fov = (double)120;
+
     camera_update_vectors(item_camera);
 };
 
 void camera_update_vectors(struct camera *item_camera)
 {
     gsl_vector *item_front = gsl_vector_alloc(3);
+
     gsl_vector_set(item_front, 0, cos(camera_radians(item_camera->yaw)) * 
                                   cos(camera_radians(item_camera->pitch)));
+
     gsl_vector_set(item_front, 1, sin(camera_radians(item_camera->pitch)));
+
     gsl_vector_set(item_front, 2, sin(camera_radians(item_camera->yaw)) * 
                                   cos(camera_radians(item_camera->pitch)));
 
     item_camera->front = vector_normalize(item_front, 3);
+
     item_camera->right = vector_normalize(vector_cross(item_camera->front, item_camera->world_up), 3);
+
     item_camera->up = vector_normalize(vector_cross(item_camera->right, 
                                                     item_camera->front), 3);
 };

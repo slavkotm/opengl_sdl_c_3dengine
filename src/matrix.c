@@ -10,6 +10,24 @@ void matrix_get_float(gsl_matrix *matrix,
             matrixf[i][j] = gsl_matrix_get(matrix, i, j);
 };
 
+float *matrix_to_array(gsl_matrix *matrix,
+                       float *array,
+                       int row,
+                       int col)
+{
+    int k = 0;
+    for(int i = 0; i < row; i++)
+    {
+        for(int j = 0; j < col; j++)
+        {
+            array[k] = gsl_matrix_get(matrix, i, j);
+            k++;
+        }
+    }
+
+    return array;
+};
+
 gsl_matrix *matrix_look_at(gsl_vector *eye,
                            gsl_vector *center,
                            gsl_vector *up)
@@ -82,3 +100,19 @@ void matrix_print(gsl_matrix *matrix,
         printf("\n");
     }
 };
+
+gsl_matrix *matrix_model()
+{
+    gsl_matrix *matrix_result = gsl_matrix_alloc(4, 4);
+    gsl_matrix_set_zero(matrix_result);
+    gsl_matrix_set(matrix_result, 0, 0, 1);
+    gsl_matrix_set(matrix_result, 1, 1, 1);
+    gsl_matrix_set(matrix_result, 2, 2, 1);
+    gsl_matrix_set(matrix_result, 3, 3, 1);
+    return matrix_result;
+};
+
+void matrix_set_value(gsl_matrix *matrix,
+                      int i,
+                      int j,
+                      double value) { gsl_matrix_set(matrix, i, j, value); };
