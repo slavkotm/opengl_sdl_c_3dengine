@@ -19,6 +19,10 @@ void shader_use(struct shader*);
 void check_compile_shader(unsigned int,
                           const char *);
 
+void shader_set_matrix4f(struct shader *,
+                         const char *,
+                         GLfloat *);
+
 unsigned int get_id(struct shader *);
 
 #endif

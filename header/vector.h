@@ -14,6 +14,17 @@ double vector_dot(const gsl_vector *,
                   const gsl_vector *,
                   int );
 
+gsl_vector *vector_subtraction(const gsl_vector *,
+                               const gsl_vector *,
+                               int );
+
+gsl_vector *vector_sum(const gsl_vector *,
+                       const gsl_vector *,
+                       int );
+
+void vector_print(gsl_vector *,
+                  int );
+
 void vector_destroy(gsl_vector *);
 
 #endif

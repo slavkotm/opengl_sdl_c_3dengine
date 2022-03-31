@@ -77,4 +77,15 @@ void check_compile_shader(unsigned int shader,
                                                                      infoLog);
         }
     }
-}
+};
+
+void shader_set_matrix4f(struct shader *item_shader,
+                         const char *shader_name,
+                         GLfloat *matrix)
+{
+    glad_glUniformMatrix4fv(glad_glGetUniformLocation(get_id(item_shader),
+                                                      shader_name),
+                            1,
+                            GL_FALSE,
+                            (const GLfloat*)matrix);
+};

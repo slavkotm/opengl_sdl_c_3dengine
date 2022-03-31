@@ -1,5 +1,52 @@
 #include "../header/vector.h"
 
+gsl_vector *vector_subtraction(const gsl_vector *vector_first,
+                               const gsl_vector *vector_second,
+                               int vector_dimension)
+{
+    gsl_vector *vector_result = gsl_vector_alloc(vector_dimension);
+
+    if(vector_dimension > 0)
+    {
+        for(int i = 0; i < vector_dimension; i++)
+        {
+            gsl_vector_set(vector_result, i, 
+                           gsl_vector_get(vector_first, i) - 
+                           gsl_vector_get(vector_second, i));
+        }
+    }
+
+    return vector_result;
+}
+
+gsl_vector *vector_sum(const gsl_vector *vector_first,
+                       const gsl_vector *vector_second,
+                       int vector_dimension)
+{
+    gsl_vector *vector_result = gsl_vector_alloc(vector_dimension);
+
+    if(vector_dimension > 0)
+    {
+        for(int i = 0; i < vector_dimension; i++)
+        {
+            gsl_vector_set(vector_result, i, 
+                           gsl_vector_get(vector_first, i) + 
+                           gsl_vector_get(vector_second, i));
+        }
+    }
+
+    return vector_result;
+}
+
+void vector_print(gsl_vector *vector,
+                  int vector_dimension)
+{
+    printf("(");
+    for(int i = 0; i < vector_dimension; i++)
+        printf("%.3lf, ", gsl_vector_get(vector, i));
+    printf(")\n");
+}
+
 gsl_vector *vector_normalize(const gsl_vector *vector,
                              int dimension_vector)
 {
