@@ -224,3 +224,11 @@ void camera_set_polygon_mode(bool flag)
     else
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 };
+
+void camera_set_cull_face_mode(bool flag)
+{
+    if(flag)
+        glEnable(GL_CULL_FACE);
+    else
+        glDisable(GL_CULL_FACE);
+};

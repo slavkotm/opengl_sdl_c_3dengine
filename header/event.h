@@ -19,6 +19,7 @@ void event_init(struct event *,
                 double,
                 double,
                 double,
+                bool,
                 bool);
 
 void event_destroy(struct event *);
@@ -33,5 +34,6 @@ double event_get_x_off_set(struct event *);
 double event_get_y_off_set(struct event *);
 
 bool event_get_space(struct event *);
+bool event_get_cull_face(struct event *);
 
 #endif

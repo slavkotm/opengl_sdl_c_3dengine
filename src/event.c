@@ -20,6 +20,7 @@ struct event
     double y_off_set;
 
     bool space;
+    bool cull_face;
 };
 
 struct event *event_malloc() 
@@ -37,7 +38,8 @@ void event_init(struct event *item_event,
                 double item_old_y,
                 double item_x_off_set,
                 double item_y_off_set,
-                bool item_space)
+                bool item_space,
+                bool item_cull_face)
 {
     item_event->item_camera = item_camera;
 
@@ -55,6 +57,7 @@ void event_init(struct event *item_event,
     item_event->y_off_set = item_y_off_set;
 
     item_event->space = item_space;
+    item_event->cull_face = item_cull_face;
 };
 
 bool event_get_running(struct event *item_event) { return item_event->running; };
@@ -77,6 +80,10 @@ void event_handle(struct event *item_event)
             {
                 item_event->space = !item_event->space;
             }
+            if(item_event->event.key.keysym.sym == SDLK_i)
+            {
+                item_event->cull_face = !item_event->cull_face;
+            }
         }
         if(item_event->event.type == SDL_MOUSEMOTION)
         {
@@ -91,16 +98,16 @@ void event_handle(struct event *item_event)
     }
 
     if(key_state[SDL_SCANCODE_W])
-        item_event->dir = CAMERA_FORWARD;
+        item_event->dir |= CAMERA_FORWARD;
 
     if(key_state[SDL_SCANCODE_A])
-        item_event->dir = CAMERA_LEFT;
+        item_event->dir |= CAMERA_LEFT;
 
     if(key_state[SDL_SCANCODE_S])
-        item_event->dir = CAMERA_BACKWARD;
+        item_event->dir |= CAMERA_BACKWARD;
 
     if(key_state[SDL_SCANCODE_D])
-        item_event->dir = CAMERA_RIGHT;
+        item_event->dir |= CAMERA_RIGHT;
 
     if(key_state[SDL_SCANCODE_ESCAPE])
         item_event->running = false;
@@ -127,3 +134,8 @@ double event_get_y_off_set(struct event *item_event)
 };
 
 bool event_get_space(struct event *item_event) { return item_event->space; };
+
+bool event_get_cull_face(struct event *item_event) 
+{ 
+    return item_event->cull_face;
+};

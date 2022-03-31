@@ -7,8 +7,8 @@
 
 #define YAW             90.0
 #define PITCH           0.0
-#define SPEED           0.05
-#define SENSITIVITY     0.05
+#define SPEED           0.5
+#define SENSITIVITY     0.5
 #define FOV             45.0
 #define ZNEAR           0.01
 #define ZFAR            1000.0
@@ -70,5 +70,7 @@ struct camera *camera_malloc();
 gsl_vector *camera_get_vector_front(struct camera *);
 
 void camera_set_polygon_mode(bool);
+
+void camera_set_cull_face_mode(bool);
 
 #endif

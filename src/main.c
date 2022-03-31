@@ -75,6 +75,7 @@ int main(int argc,
                0,
                0,
                0,
+               false,
                false);
 
 
@@ -155,6 +156,7 @@ int main(int argc,
     double move1 = 0;
 
     glad_glEnable(GL_DEPTH_TEST);  
+    glad_glFrontFace(GL_CW);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -166,6 +168,7 @@ int main(int argc,
         camera_move(item_camera, event_get_dir(item_event));
         camera_rotate(item_camera, event_get_x_off_set(item_event), -event_get_y_off_set(item_event));
         camera_set_polygon_mode(event_get_space(item_event));
+        camera_set_cull_face_mode(event_get_cull_face(item_event));
                 
         glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

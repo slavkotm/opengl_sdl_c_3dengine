@@ -25,11 +25,6 @@ void matrix_set_value(gsl_matrix *,
 
 void matrix_destroy(gsl_matrix *);
 
-void matrix_get_float(gsl_matrix *,
-                      float **matrixf,
-                      int ,
-                      int);
-
 float *matrix_to_array(gsl_matrix *,
                        float *,
                        int,

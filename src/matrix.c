@@ -1,15 +1,5 @@
 #include "../header/matrix.h"
 
-void matrix_get_float(gsl_matrix *matrix,
-                      float **matrixf,
-                      int row,
-                      int col)
-{
-    for(int i = 0; i < row; i++)
-        for(int j = 0; j < col; j++)
-            matrixf[i][j] = gsl_matrix_get(matrix, i, j);
-};
-
 float *matrix_to_array(gsl_matrix *matrix,
                        float *array,
                        int row,
