@@ -79,20 +79,6 @@ int main(int argc,
                false);
 
 
-    gsl_vector *a = gsl_vector_alloc(3);
-    gsl_vector_set(a, 0, 0);
-    gsl_vector_set(a, 1, 0);
-    gsl_vector_set(a, 2, 3);
-
-    gsl_vector *bbb = gsl_vector_alloc(3);
-    gsl_vector_set(bbb, 0, 0);
-    gsl_vector_set(bbb, 1, 0);
-    gsl_vector_set(bbb, 2, 0);
-
-    gsl_vector *c = gsl_vector_alloc(3);
-    gsl_vector_set(c, 0, 0);
-    gsl_vector_set(c, 1, 1);
-    gsl_vector_set(c, 2, 0);
 
     gsl_matrix *model = camera_get_model_matrix();
     gsl_matrix *model1 = camera_get_model_matrix();
@@ -100,7 +86,7 @@ int main(int argc,
 
     struct shader *shaders = shader_malloc();
 
-    shader_init(shaders, "shaders/basic_v.glsl", "shaders/basic_f.glsl", "r");
+    shader_init(shaders, "shaders/basic.vert", "shaders/basic.frag", "r");
 
 
     GLfloat vertex[] = {

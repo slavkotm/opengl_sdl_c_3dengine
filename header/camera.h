@@ -8,7 +8,7 @@
 #define YAW             90.0
 #define PITCH           0.0
 #define SPEED           0.5
-#define SENSITIVITY     0.5
+#define SENSITIVITY     0.25
 #define FOV             45.0
 #define ZNEAR           0.01
 #define ZFAR            1000.0
