@@ -89,3 +89,15 @@ void shader_set_matrix4f(struct shader *item_shader,
                             GL_FALSE,
                             (const GLfloat*)matrix);
 };
+
+void shader_set_vec3(struct shader *item_shader,
+                     const char *shader_name,
+                     GLfloat x,
+                     GLfloat y,
+                     GLfloat z)
+{
+    glad_glUniform3f(glad_glGetUniformLocation(get_id(item_shader), shader_name),
+                     x,
+                     y,
+                     z);
+};

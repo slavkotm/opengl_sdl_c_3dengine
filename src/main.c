@@ -7,6 +7,10 @@
 #include "../include/GL/gl.h"
 #include "../include/gsl/gsl_blas.h"
 #include "../include/gsl/gsl_matrix_double.h"
+#include "../include/stb/stb_image.h"
+#include "../include/assimp/cimport.h"
+#include "../include/assimp/scene.h"
+#include "../include/assimp/postprocess.h"
 #include "../header/read.h"
 #include "../header/shader.h"
 #include "../header/init.h"
@@ -22,12 +26,9 @@ int main(int argc,
          char **argv)
 {
     init(true, false);
-
     SDL_Window *window = window_create("OpenGL + C + SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
-    
     SDL_GLContext gl_context = context_create(window);
     context_set(3, 3);
-
     gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
     gsl_vector *vector_position = gsl_vector_alloc(3);
@@ -85,19 +86,20 @@ int main(int argc,
     gsl_matrix *model2 = camera_get_model_matrix();
 
     struct shader *shaders = shader_malloc();
+    struct shader *light_shader = shader_malloc();
 
     shader_init(shaders, "shaders/basic.vert", "shaders/basic.frag", "r");
+    shader_init(light_shader, "shaders/light.vert", "shaders/light.frag", "r");
 
-
-    GLfloat vertex[] = {
-       -0.5f,  0.5f, -0.5f,    1.0f, 0.0f, 0.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,    0.0f, 1.0f, 0.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,    0.0f, 0.0f, 1.0f, 1.0f,
+    /*GLfloat vertex[] = {
+       -0.5f,  0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
+        0.5f,  0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
+        0.5f,  0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
        -0.5f,  0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-       -0.5f, -0.5f, -0.5f,    1.0f, 1.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,    0.0f, 1.0f, 1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,    1.0f, 1.0f, 0.0f, 1.0f,
-       -0.5f, -0.5f,  0.5f,    0.5f, 0.0f, 0.0f, 1.0f
+       -0.5f, -0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
+        0.5f, -0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
+        0.5f, -0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
+       -0.5f, -0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f
     };
 
     GLuint indices[] = {
@@ -114,6 +116,7 @@ int main(int argc,
         4, 7, 5,
         5, 7, 6
     };
+
 
     GLuint VBO, VAO, EBO;
     glad_glGenVertexArrays(1, &VAO);
@@ -135,7 +138,81 @@ int main(int argc,
 
     glad_glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glad_glBindVertexArray(0);
+    glad_glBindVertexArray(0);*/
+
+        // Указание вершин (и буфера(ов)) и настройка вершинных атрибутов
+    float vertices[] = {
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+             0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+
+             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+             0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+             0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
+    };
+
+    // 1. Настраиваем VAO (и VBO) куба
+    unsigned int VBO, cubeVAO;
+    glGenVertexArrays(1, &cubeVAO);
+    glGenBuffers(1, &VBO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+    glBindVertexArray(cubeVAO);
+
+    // Координатные атрибуты
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    // Атрибуты нормалей
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
+    // 2. Настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
+    unsigned int lightVAO;
+    glGenVertexArrays(1, &lightVAO);
+    glBindVertexArray(lightVAO);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+    // Обратите внимание, что мы обновляем шаг атрибута положения лампы, чтобы отразить обновленные данные буфера
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
     double angle = 45.0;
     double move = 0;
@@ -168,7 +245,7 @@ int main(int argc,
         GLfloat p[16];
         matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
 
-        GLfloat m[16];
+       /* GLfloat m[16];
         matrix_to_array(model, m, 4, 4);
 
         shader_use(shaders);
@@ -186,9 +263,16 @@ int main(int argc,
         angle += 1.0;
 
         glad_glBindVertexArray(VAO);
-        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);*/
+
+        //glad_glBindVertexArray(VAO);
 
 
+
+        shader_use(shaders);
+        shader_set_vec3(shaders, "objectColor", 1.0f, 0.5f, 0.31f);
+        shader_set_vec3(shaders, "lightColor", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(shaders, "lightPos", 1.2f, 1.0f, 2.0f);
 
         GLfloat mm[16];
         matrix_to_array(model1, mm, 4, 4);
@@ -200,13 +284,14 @@ int main(int argc,
         GLuint projection1 = glad_glGetUniformLocation(get_id(shaders), "projection");
         glad_glUniformMatrix4fv(projection1, 1, GL_FALSE, (const GLfloat *)p);
 
-        matrix_set_value(model1, 3, 0, move1);
-        matrix_set_value(model1, 3, 1, move1);
-        move1 += 0.001;
+        //matrix_set_value(model1, 3, 0, move1 + 2);
+        //matrix_set_value(model1, 3, 1, move1);
+        //move1 += 0.001;
 
-//        glad_glBindVertexArray(VAO);
-        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
+        //glad_glBindVertexArray(cubeVAO);
+        //glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        glad_glBindVertexArray(cubeVAO);
+        glad_glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
 
@@ -214,19 +299,37 @@ int main(int argc,
         GLfloat mmm[16];
         matrix_to_array(model2, mmm, 4, 4);
 
-        GLuint transformLoc2 = glad_glGetUniformLocation(get_id(shaders), "model");
+        shader_use(light_shader);
+        GLuint transformLoc2 = glad_glGetUniformLocation(get_id(light_shader), "model");
         glad_glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, (const GLfloat *)mmm);
-        GLuint view2 = glad_glGetUniformLocation(get_id(shaders), "view");
+        GLuint view2 = glad_glGetUniformLocation(get_id(light_shader), "view");
         glad_glUniformMatrix4fv(view2, 1, GL_FALSE,(const GLfloat *)a);
-        GLuint projection2 = glad_glGetUniformLocation(get_id(shaders), "projection");
+        GLuint projection2 = glad_glGetUniformLocation(get_id(light_shader), "projection");
         glad_glUniformMatrix4fv(projection2, 1, GL_FALSE, (const GLfloat *)p);
 
-        matrix_set_value(model2, 3, 0, move);
-        matrix_set_value(model2, 3, 1, move);
-        matrix_set_value(model2, 3, 2, move);
-        move += 0.01;
-//        glad_glBindVertexArray(VAO);
-        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+        matrix_set_value(model2, 0, 0, 0.2f);
+        matrix_set_value(model2, 1, 1, 0.2f);
+        matrix_set_value(model2, 2, 2, 0.2f);
+
+        matrix_set_value(model2, 3, 0, 1.2f);
+        matrix_set_value(model2, 3, 1, 1.0f);
+        matrix_set_value(model2, 3, 2, 2.0f);
+
+        glad_glBindVertexArray(lightVAO);
+        glad_glDrawArrays(GL_TRIANGLES, 0, 36);
+        //move += 0.01;
+        //glad_glBindVertexArray(lightVAO);
+        //glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+
+
+
+
+
+
+        
+
+
+
 
         SDL_GL_SwapWindow(window);
     }
@@ -236,9 +339,9 @@ int main(int argc,
     camera_destroy(item_camera);
     free(item_camera);
 
-    glad_glDeleteVertexArrays(1, &VAO);
-    glad_glDeleteBuffers(1, &VBO); 
-    glad_glDeleteBuffers(1, &EBO); 
+    //glad_glDeleteVertexArrays(1, &VAO);
+    //glad_glDeleteBuffers(1, &VBO); 
+    //glad_glDeleteBuffers(1, &EBO); 
 
     context_delete(&gl_context);
 

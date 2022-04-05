@@ -23,6 +23,12 @@ void shader_set_matrix4f(struct shader *,
                          const char *,
                          GLfloat *);
 
+void shader_set_vec3(struct shader *,
+                     const char *,
+                     GLfloat,
+                     GLfloat,
+                     GLfloat);
+
 unsigned int get_id(struct shader *);
 
 #endif
