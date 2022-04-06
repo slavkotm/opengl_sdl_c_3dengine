@@ -83,161 +83,118 @@ int main(int argc,
 
     gsl_matrix *model = camera_get_model_matrix();
     gsl_matrix *model1 = camera_get_model_matrix();
-    gsl_matrix *model2 = camera_get_model_matrix();
 
-    struct shader *shaders = shader_malloc();
+    struct shader *simple_shader = shader_malloc();
     struct shader *light_shader = shader_malloc();
 
-    shader_init(shaders, "shaders/basic.vert", "shaders/basic.frag", "r");
+    shader_init(simple_shader, "shaders/basic.vert", "shaders/basic.frag", "r");
     shader_init(light_shader, "shaders/light.vert", "shaders/light.frag", "r");
 
-    /*GLfloat vertex[] = {
-       -0.5f,  0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-        0.5f,  0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-        0.5f,  0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-       -0.5f,  0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-       -0.5f, -0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-        0.5f, -0.5f, -0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-        0.5f, -0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f,
-       -0.5f, -0.5f,  0.5f,    1.0f, 1.0f, 1.0f, 1.0f
-    };
+    float cube[] = {
 
-    GLuint indices[] = {
-        0, 1, 3,
-        1, 2, 3,
-        0, 4, 1,
-        1, 4, 5,
-        0, 3, 7,
-        0, 7, 4,
-        1, 6, 2,
-        1, 5, 6,
-        2, 7, 3,
-        2, 6, 7,
-        4, 7, 5,
-        5, 7, 6
-    };
+	    -1.0f,-1.0f,-1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f,-1.0f, 1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f, 1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+    	-1.0f,-1.0f,-1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f, 1.0f,	-1.0f,  0.0f,  0.0f,	1.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f,-1.0f,	-1.0f,  0.0f,  0.0f,	0.0f, 1.0f,		0.0f, 1.0f, 0.0f,
 
+	    1.0f, 1.0f,-1.0f,	0.0f,  0.0f, -1.0f, 	0.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+	    -1.0f,-1.0f,-1.0f,	0.0f,  0.0f, -1.0f, 	1.0f, 0.0f,		1.0f, 0.0f, 0.0f,
+	    -1.0f, 1.0f,-1.0f,	0.0f,  0.0f, -1.0f, 	1.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f, 1.0f,-1.0f,	0.0f,  0.0f, -1.0f,		0.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+    	1.0f,-1.0f,-1.0f,	0.0f,  0.0f, -1.0f,		0.0f, 0.0f,		1.0f, 0.0f, 0.0f,
+	    -1.0f,-1.0f,-1.0f,	0.0f,  0.0f, -1.0f,		1.0f, 0.0f,		1.0f, 0.0f, 0.0f,
 
-    GLuint VBO, VAO, EBO;
-    glad_glGenVertexArrays(1, &VAO);
-    glad_glGenBuffers(1, &VBO);
-    glad_glGenBuffers(1, &EBO);
+	    1.0f,-1.0f, 1.0f,	0.0f, -1.0f,  0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 1.0f,
+	    -1.0f,-1.0f,-1.0f,	0.0f, -1.0f,  0.0f,		1.0f, 1.0f,		0.0f, 0.0f, 1.0f,
+	    1.0f,-1.0f,-1.0f,	0.0f, -1.0f,  0.0f,		0.0f, 1.0f,		0.0f, 0.0f, 1.0f,
+	    1.0f,-1.0f, 1.0f,	0.0f, -1.0f,  0.0f,		0.0f, 0.0f,		0.0f, 0.0f, 1.0f,
+	    -1.0f,-1.0f, 1.0f,	0.0f, -1.0f,  0.0f,		1.0f, 0.0f,		0.0f, 0.0f, 1.0f,
+	    -1.0f,-1.0f,-1.0f,	0.0f, -1.0f,  0.0f,		1.0f, 1.0f,		0.0f, 0.0f, 1.0f,
 
-    glad_glBindVertexArray(VAO);
+	    -1.0f, 1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		0.0f, 1.0f,		0.0f, 0.0f, 1.0f,
+	    -1.0f,-1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		0.0f, 0.0f,		0.0f, 0.0f, 1.0f,
+	    1.0f,-1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		1.0f, 0.0f,		0.0f, 0.0f, 1.0f,
+	    1.0f, 1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		1.0f, 1.0f,		0.0f, 0.0f, 1.0f,
+	    -1.0f, 1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		0.0f, 1.0f,		0.0f, 0.0f, 1.0f,
+	    1.0f,-1.0f, 1.0f,	0.0f,  0.0f, 1.0f,		1.0f, 0.0f,		0.0f, 0.0f, 1.0f,
 
-    glad_glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glad_glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	    1.0f, 1.0f, 1.0f,	1.0f,  0.0f,  0.0f,		0.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f,-1.0f,-1.0f,	1.0f,  0.0f,  0.0f,		1.0f, 0.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f, 1.0f,-1.0f,	1.0f,  0.0f,  0.0f,		1.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f,-1.0f,-1.0f,	1.0f,  0.0f,  0.0f,		1.0f, 0.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f, 1.0f, 1.0f,	1.0f,  0.0f,  0.0f,		0.0f, 1.0f,		1.0f, 0.0f, 0.0f,
+	    1.0f,-1.0f, 1.0f,	1.0f,  0.0f,  0.0f,		0.0f, 0.0f,		1.0f, 0.0f, 0.0f,
 
-    glad_glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glad_glBufferData(GL_ARRAY_BUFFER, sizeof(vertex), vertex, GL_STATIC_DRAW);
+	    1.0f, 1.0f, 1.0f,	0.0f,  1.0f,  0.0f,		1.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	    1.0f, 1.0f,-1.0f,	0.0f,  1.0f,  0.0f,		1.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f,-1.0f,	0.0f,  1.0f,  0.0f,		0.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	    1.0f, 1.0f, 1.0f,	0.0f,  1.0f,  0.0f,		1.0f, 0.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f,-1.0f,	0.0f,  1.0f,  0.0f,		0.0f, 1.0f,		0.0f, 1.0f, 0.0f,
+	    -1.0f, 1.0f, 1.0f,	0.0f,  1.0f,  0.0f,		0.0f, 0.0f,		0.0f, 1.0f, 0.0f
+   };
 
-    glad_glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)0);
-    glad_glEnableVertexAttribArray(0);
-    glad_glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
-    glad_glEnableVertexAttribArray(1);
+	GLint box_width, box_height, channels;
+	stbi_uc* data = stbi_load("assets/box.png", &box_width, &box_height, &channels, 0);
+	GLuint box_texture;
+	glGenTextures(1, &box_texture);
 
-    glad_glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, box_texture);
 
-    glad_glBindVertexArray(0);*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-        // Указание вершин (и буфера(ов)) и настройка вершинных атрибутов
-    float vertices[] = {
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-             0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+	if (channels == 3)
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, box_width, box_height, 0, GL_RGB,  GL_UNSIGNED_BYTE, data);
+	else
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, box_width, box_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	stbi_image_free(data);
 
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-             0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+	GLuint VBO_polygon, VAO_polygon;
+	glad_glGenBuffers(1, &VBO_polygon);
+	glad_glGenVertexArrays(1, &VAO_polygon);
 
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+	glad_glBindVertexArray(VAO_polygon);
+	glad_glBindBuffer(GL_ARRAY_BUFFER, VBO_polygon);
+	glad_glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
 
-             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-             0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-             0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
-             0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+	glad_glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void*)0);
+	glad_glEnableVertexAttribArray(0);
 
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-             0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-             0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
-            -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+	glad_glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat)));
+	glad_glEnableVertexAttribArray(1);
 
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-             0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-             0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
-            -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
-    };
-
-    // 1. Настраиваем VAO (и VBO) куба
-    unsigned int VBO, cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
-    glGenBuffers(1, &VBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindVertexArray(cubeVAO);
-
-    // Координатные атрибуты
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    // Атрибуты нормалей
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
-
-    // 2. Настраиваем VAO света (VBO остается неизменным; вершины те же и для светового объекта, который также является 3D-кубом)
-    unsigned int lightVAO;
-    glGenVertexArrays(1, &lightVAO);
-    glBindVertexArray(lightVAO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-
-    // Обратите внимание, что мы обновляем шаг атрибута положения лампы, чтобы отразить обновленные данные буфера
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    double angle = 45.0;
-    double move = 0;
-    double move1 = 0;
-
-    glad_glEnable(GL_DEPTH_TEST);  
-    glad_glFrontFace(GL_CW);
+	glad_glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void*)(6 * sizeof(GLfloat)));
+	glad_glEnableVertexAttribArray(2);
+    
+	glad_glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(GLfloat), (void*)(8 * sizeof(GLfloat)));
+	glad_glEnableVertexAttribArray(3);
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
     SDL_WarpMouseInWindow(window, 640, 360);
 
+    float move = 0.01f;
+    glad_glEnable(GL_DEPTH_TEST);
+
+    GLfloat mm[16];
+    GLfloat mm1[16];
+    GLfloat cgp[3];
+    gsl_vector *gsl_cgp = gsl_vector_alloc(3);
     while(event_get_running(item_event))
     {
         event_handle(item_event);
         camera_move(item_camera, event_get_dir(item_event));
         camera_rotate(item_camera, event_get_x_off_set(item_event), -event_get_y_off_set(item_event));
-        camera_set_polygon_mode(event_get_space(item_event));
         camera_set_cull_face_mode(event_get_cull_face(item_event));
+        camera_set_polygon_mode(event_get_space(item_event));
                 
         glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        gsl_matrix *pv = gsl_matrix_alloc(4, 4);
-        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, (double)1, camera_get_projection_matrix(item_camera), camera_get_view_matrix(item_camera), 0, pv);
 
         GLfloat a[16]; 
         matrix_to_array(camera_get_view_matrix(item_camera), a, 4, 4);
@@ -245,108 +202,63 @@ int main(int argc,
         GLfloat p[16];
         matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
 
-       /* GLfloat m[16];
-        matrix_to_array(model, m, 4, 4);
+        matrix_to_array(model, mm, 4, 4);
+        //mm[12] = move;
 
-        shader_use(shaders);
-        GLuint transformLoc = glad_glGetUniformLocation(get_id(shaders), "model");
-        glad_glUniformMatrix4fv(transformLoc, 1, GL_FALSE, (const GLfloat *)m);
-        GLuint view = glad_glGetUniformLocation(get_id(shaders), "view");
-        glad_glUniformMatrix4fv(view, 1, GL_FALSE,(const GLfloat *)a);
-        GLuint projection = glad_glGetUniformLocation(get_id(shaders), "projection");
-        glad_glUniformMatrix4fv(projection, 1, GL_FALSE, (const GLfloat *)p);
+        /*mm[0] = cos(M_PI * move * 50 / 180.0);
+        mm[8] = -sin(M_PI * move * 50 / 180.0);
+        mm[2] = sin(M_PI * move * 50/ 180.0);
+        mm[10] = cos(M_PI * move * 50/ 180.0);*/
 
-        matrix_set_value(model, 1, 1, cos(PI * angle / 180));
-        matrix_set_value(model, 2, 1, sin(PI * angle / 180));
-        matrix_set_value(model, 1, 2,-sin(PI * angle / 180));
-        matrix_set_value(model, 2, 2, cos(PI * angle / 180));
-        angle += 1.0;
+        move += 0.01;
+       
+        gsl_cgp = camera_get_position(item_camera);
 
-        glad_glBindVertexArray(VAO);
-        glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);*/
+        cgp[0] = gsl_vector_get(gsl_cgp, 0);
+        cgp[1] = gsl_vector_get(gsl_cgp, 1);
+        cgp[2] = gsl_vector_get(gsl_cgp, 2);
 
-        //glad_glBindVertexArray(VAO);
+        shader_use(simple_shader);
+        shader_set_matrix4f(simple_shader, "model", mm);
+        shader_set_matrix4f(simple_shader, "view", a);
+        shader_set_matrix4f(simple_shader, "projection", p);
+        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
+        shader_set_vec3(simple_shader, "lightPos", 0.0f, 5.0f * cos(move * 1.2f), 5.0f * sin(move  *1.2f));
+        shader_set_vec3(simple_shader, "lightColor", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(simple_shader, "ambientColor", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
 
-
-
-        shader_use(shaders);
-        shader_set_vec3(shaders, "objectColor", 1.0f, 0.5f, 0.31f);
-        shader_set_vec3(shaders, "lightColor", 1.0f, 1.0f, 1.0f);
-        shader_set_vec3(shaders, "lightPos", 1.2f, 1.0f, 2.0f);
-
-        GLfloat mm[16];
-        matrix_to_array(model1, mm, 4, 4);
-
-        GLuint transformLoc1 = glad_glGetUniformLocation(get_id(shaders), "model");
-        glad_glUniformMatrix4fv(transformLoc1, 1, GL_FALSE, (const GLfloat *)mm);
-        GLuint view1 = glad_glGetUniformLocation(get_id(shaders), "view");
-        glad_glUniformMatrix4fv(view1, 1, GL_FALSE,(const GLfloat *)a);
-        GLuint projection1 = glad_glGetUniformLocation(get_id(shaders), "projection");
-        glad_glUniformMatrix4fv(projection1, 1, GL_FALSE, (const GLfloat *)p);
-
-        //matrix_set_value(model1, 3, 0, move1 + 2);
-        //matrix_set_value(model1, 3, 1, move1);
-        //move1 += 0.001;
-
-        //glad_glBindVertexArray(cubeVAO);
-        //glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-        glad_glBindVertexArray(cubeVAO);
-        glad_glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(VAO_polygon);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
 
+        matrix_to_array(model1, mm1, 4, 4);
+        mm1[13] = 5.0f * cos(move * 1.2f);
+        mm1[14] = 5.0f * sin(move  *1.2f);
 
-
-        GLfloat mmm[16];
-        matrix_to_array(model2, mmm, 4, 4);
+        mm1[0] = 0.2f;
+        mm1[5] = 0.2f;
+        mm1[10] = 0.2f;
+        //mm[12] = move;
 
         shader_use(light_shader);
-        GLuint transformLoc2 = glad_glGetUniformLocation(get_id(light_shader), "model");
-        glad_glUniformMatrix4fv(transformLoc2, 1, GL_FALSE, (const GLfloat *)mmm);
-        GLuint view2 = glad_glGetUniformLocation(get_id(light_shader), "view");
-        glad_glUniformMatrix4fv(view2, 1, GL_FALSE,(const GLfloat *)a);
-        GLuint projection2 = glad_glGetUniformLocation(get_id(light_shader), "projection");
-        glad_glUniformMatrix4fv(projection2, 1, GL_FALSE, (const GLfloat *)p);
+        shader_set_matrix4f(light_shader, "model", mm1);
+        shader_set_matrix4f(light_shader, "view", a);
+        shader_set_matrix4f(light_shader, "projection", p);
+        shader_set_vec3(light_shader, "lightColor", 1.0f, 1.0f, 1.0f);
 
-        matrix_set_value(model2, 0, 0, 0.2f);
-        matrix_set_value(model2, 1, 1, 0.2f);
-        matrix_set_value(model2, 2, 2, 0.2f);
-
-        matrix_set_value(model2, 3, 0, 1.2f);
-        matrix_set_value(model2, 3, 1, 1.0f);
-        matrix_set_value(model2, 3, 2, 2.0f);
-
-        glad_glBindVertexArray(lightVAO);
-        glad_glDrawArrays(GL_TRIANGLES, 0, 36);
-        //move += 0.01;
-        //glad_glBindVertexArray(lightVAO);
-        //glad_glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-
-
-
-
-
-
-        
-
-
-
+        glBindVertexArray(VAO_polygon);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         SDL_GL_SwapWindow(window);
     }
 
     event_destroy(item_event);
-    shader_destroy(shaders);
+    shader_destroy(simple_shader);
     camera_destroy(item_camera);
     free(item_camera);
-
-    //glad_glDeleteVertexArrays(1, &VAO);
-    //glad_glDeleteBuffers(1, &VBO); 
-    //glad_glDeleteBuffers(1, &EBO); 
-
     context_delete(&gl_context);
-
     SDL_DestroyWindow(window);
-
     SDL_Quit();
 
     return 0;

@@ -73,4 +73,6 @@ void camera_set_polygon_mode(bool);
 
 void camera_set_cull_face_mode(bool);
 
+gsl_vector *camera_get_position(struct camera *);
+
 #endif

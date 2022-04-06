@@ -228,7 +228,14 @@ void camera_set_polygon_mode(bool flag)
 void camera_set_cull_face_mode(bool flag)
 {
     if(flag)
+    {
         glEnable(GL_CULL_FACE);
+    }
     else
         glDisable(GL_CULL_FACE);
+};
+
+gsl_vector *camera_get_position(struct camera *item_camera)
+{
+    return item_camera->position;
 };

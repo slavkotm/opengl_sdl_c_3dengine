@@ -101,3 +101,11 @@ void shader_set_vec3(struct shader *item_shader,
                      y,
                      z);
 };
+
+void shader_set_bool(struct shader *item_shader,
+                     const char *shader_name,
+                     bool value)
+{
+    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name),
+                     value);
+};

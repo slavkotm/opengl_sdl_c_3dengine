@@ -1,7 +1,11 @@
 #version 330 core
-out vec4 FragColor;
+
+out vec4 outColor;
+
+uniform vec3 lightColor;
 
 void main()
 {
-    FragColor = vec4(1.0); // устанавливаем значения всех 4-х компонентов вектора равным 1.0
+    outColor = vec4(lightColor, 1.0f);
 }
+

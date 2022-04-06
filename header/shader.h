@@ -4,6 +4,7 @@
 #include "../include/glad/glad.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 struct shader;
 
@@ -30,5 +31,9 @@ void shader_set_vec3(struct shader *,
                      GLfloat);
 
 unsigned int get_id(struct shader *);
+
+void shader_set_bool(struct shader *,
+                     const char *,
+                     bool);
 
 #endif
