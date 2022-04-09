@@ -28,9 +28,22 @@ struct Material
     GLfloat shininess;
 };
 
-struct Light
+struct PointLight
 {
     GLfloat position[3];
+
+    GLfloat ambient[3];
+    GLfloat diffuse[3];
+    GLfloat specular[3];
+
+    float constant;
+    float linear;
+    float quadratic;
+};
+
+struct DirecationalLight
+{
+    GLfloat direction[3];
 
     GLfloat ambient[3];
     GLfloat diffuse[3];
@@ -250,7 +263,7 @@ int main(int argc,
     cubeMat3.shininess = 77.0f;
 
 
-    struct Light light1;
+    struct PointLight light1;
 
     light1.position[0] = 0.0f;
     light1.position[1] = 0.0f;
@@ -267,6 +280,14 @@ int main(int argc,
     light1.specular[0] = 1.0f;
     light1.specular[1] = 1.0f;
     light1.specular[2] = 1.0f;
+
+    light1.constant = 1.0f;
+    light1.linear = 0.14f;
+    light1.quadratic = 0.07f;
+
+    float mmmoveee = 5.0f;
+    float mmmrl = 5.0f;
+    float mmmud = 0.0f;
 
     while(event_get_running(item_event))
     {
@@ -293,9 +314,23 @@ int main(int argc,
         mm[2] = sin(M_PI * move * 50/ 180.0);
         mm[10] = cos(M_PI * move * 50/ 180.0);*/
 
-        light1.position[0] = 5.0f;// * cos(move * 1.2f);
-        light1.position[1] = 0.0f;
-        light1.position[2] = 5.0f;// * sin(move * 1.2f);
+        const Uint8 *key_state = SDL_GetKeyboardState(NULL); 
+        if(key_state[SDL_SCANCODE_UP])
+            mmmoveee -= 0.05;
+        if(key_state[SDL_SCANCODE_DOWN])
+            mmmoveee += 0.05;
+        if(key_state[SDL_SCANCODE_LEFT])
+            mmmrl -= 0.05;
+        if(key_state[SDL_SCANCODE_RIGHT])
+            mmmrl += 0.05;
+        if(key_state[SDL_SCANCODE_PAGEUP])
+            mmmud += 0.05;
+        if(key_state[SDL_SCANCODE_PAGEDOWN])
+            mmmud -= 0.05;
+
+        light1.position[0] = mmmrl;// * cos(move * 1.2f);
+        light1.position[1] = mmmud;
+        light1.position[2] = mmmoveee;// * sin(move * 1.2f);
 
         /*light1.specular[0] = (sin(move * (double)2) + (double)1);
         light1.specular[1] = (sin(move * (double)2 + (double)2 * M_PI / (double)3) + (double)1);
@@ -325,17 +360,25 @@ int main(int argc,
         shader_set_matrix4f(simple_shader, "projection", p);
         shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
         shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
+
         shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
         shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
         shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
+
         shader_set_vec3(simple_shader, "material.ambient", cubeMat1.ambient[0], cubeMat1.ambient[1], cubeMat1.ambient[2]);
         shader_set_vec3(simple_shader, "material.diffuse", cubeMat1.diffuse[0], cubeMat1.diffuse[1], cubeMat1.diffuse[2]);
         shader_set_vec3(simple_shader, "material.specular", cubeMat1.specular[0], cubeMat1.specular[1], cubeMat1.specular[2]);
         shader_set_float(simple_shader, "material.shininess", cubeMat1.shininess);
+
         shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
+
+        shader_set_float(simple_shader, "light.constant", light1.constant);
+        shader_set_float(simple_shader, "light.linear", light1.linear);
+        shader_set_float(simple_shader, "light.quadratic", light1.quadratic);
 
         glBindVertexArray(VAO_polygon);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
 
         shader_use(simple_shader);
         matrix_to_array(model, mmc1, 4, 4);
@@ -380,6 +423,7 @@ int main(int argc,
 
         matrix_to_array(model1, mm1, 4, 4);
         mm1[12] = light1.position[0];
+        mm1[13] = light1.position[1];
         mm1[14] = light1.position[2];
 
         mm1[0] = 0.2f;
