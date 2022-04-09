@@ -26,7 +26,6 @@ uniform sampler2D ourTexture;
 uniform bool wireframeMode;
 
 uniform vec3 viewPos;
-uniform vec3 lightPos;
 uniform Material material;
 uniform Light light;
 
@@ -41,9 +40,16 @@ void main()
     vec3 diffuse = light.diffuse * (diff_koef * material.diffuse);
 
     // specular
-    vec3 viewDir = normalize(FragPos - viewPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec_koef = pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess);
+    vec3 lightpos = light.position;
+    float spec_koef = 0;
+    for(float i = -0.2; i <= 0.2; i += 0.05)
+    {
+        lightpos.y = light.position.y + i;
+        vec3 slightDir = normalize(FragPos - lightpos);
+        vec3 viewDir = normalize(FragPos - viewPos);
+        vec3 reflectDir = reflect(-slightDir, norm);
+        spec_koef += pow(max(dot(viewDir, reflectDir), 0.0f), material.shininess * 20.0f);
+    }
     vec3 specular = light.specular * (spec_koef * material.specular);
 
     if(wireframeMode)

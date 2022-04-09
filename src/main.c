@@ -297,9 +297,9 @@ int main(int argc,
         light1.position[1] = 0.0f;
         light1.position[2] = 5.0f;// * sin(move * 1.2f);
 
-        light1.specular[0] = (sin(move * (double)2) + (double)1) / (double)2;
-        light1.specular[1] = (sin(move * (double)2 + (double)2 * M_PI / (double)3) + (double)1) / (double)2;
-        light1.specular[2] = (sin(move * (double)2 + (double)4 * M_PI / (double)3) + (double)1) / (double)2;
+        /*light1.specular[0] = (sin(move * (double)2) + (double)1);
+        light1.specular[1] = (sin(move * (double)2 + (double)2 * M_PI / (double)3) + (double)1);
+        light1.specular[2] = (sin(move * (double)2 + (double)4 * M_PI / (double)3) + (double)1) ;
 
         light1.diffuse[0] = 0.8 * light1.specular[0];
         light1.diffuse[1] = 0.8 * light1.specular[1];
@@ -307,7 +307,7 @@ int main(int argc,
 
         light1.ambient[0] = 0.4 * light1.specular[0];
         light1.ambient[1] = 0.4 * light1.specular[1];
-        light1.ambient[2] = 0.4 * light1.specular[2];
+        light1.ambient[2] = 0.4 * light1.specular[2];*/
 
         move += 0.01;
        
