@@ -20,7 +20,22 @@
 #include "../header/vector.h"
 #include "../header/camera.h"
 
-#define PI 3.141592654
+struct Material
+{
+    GLfloat ambient[3];
+    GLfloat diffuse[3];
+    GLfloat specular[3];
+    GLfloat shininess;
+};
+
+struct Light
+{
+    GLfloat position[3];
+
+    GLfloat ambient[3];
+    GLfloat diffuse[3];
+    GLfloat specular[3];
+};
 
 int main(int argc, 
          char **argv)
@@ -181,9 +196,78 @@ int main(int argc,
     glad_glEnable(GL_DEPTH_TEST);
 
     GLfloat mm[16];
+    GLfloat mmc1[16];
+    GLfloat mmc2[16];
     GLfloat mm1[16];
     GLfloat cgp[3];
     gsl_vector *gsl_cgp = gsl_vector_alloc(3);
+
+    struct Material cubeMat1;
+    cubeMat1.ambient[0] = 0.25;
+    cubeMat1.ambient[1] = 0.20725;
+    cubeMat1.ambient[2] = 0.20725;
+
+    cubeMat1.diffuse[0] = 1;
+    cubeMat1.diffuse[1] = 0.829;
+    cubeMat1.diffuse[2] = 0.829;
+
+    cubeMat1.specular[0] = 0.296648;
+    cubeMat1.specular[1] = 0.296648;
+    cubeMat1.specular[2] = 0.296648;
+
+    cubeMat1.shininess = 12.0f;
+    // perl
+
+    struct Material cubeMat2;
+    cubeMat2.ambient[0] = 0.25;
+    cubeMat2.ambient[1] = 0.25;
+    cubeMat2.ambient[2] = 0.25;
+
+    cubeMat2.diffuse[0] = 0.4;
+    cubeMat2.diffuse[1] = 0.4;
+    cubeMat2.diffuse[2] = 0.4;
+
+    cubeMat2.specular[0] = 0.774597;
+    cubeMat2.specular[1] = 0.774597;
+    cubeMat2.specular[2] = 0.774597;
+
+    cubeMat2.shininess = 77.0f;
+    // chrome
+
+    struct Material cubeMat3;
+    cubeMat3.ambient[0] = 0.1745;
+    cubeMat3.ambient[1] = 0.01175;
+    cubeMat3.ambient[2] = 0.01175;
+
+    cubeMat3.diffuse[0] = 0.61424;
+    cubeMat3.diffuse[1] = 0.04136;
+    cubeMat3.diffuse[2] = 0.04136;
+
+    cubeMat3.specular[0] = 0.727811;
+    cubeMat3.specular[1] = 0.626959;
+    cubeMat3.specular[2] = 0.626959;
+
+    cubeMat3.shininess = 77.0f;
+
+
+    struct Light light1;
+
+    light1.position[0] = 0.0f;
+    light1.position[1] = 0.0f;
+    light1.position[2] = 0.0f;
+
+    light1.ambient[0] = 0.2f;
+    light1.ambient[1] = 0.2f;
+    light1.ambient[2] = 0.2f;
+
+    light1.diffuse[0] = 0.5f;
+    light1.diffuse[1] = 0.5f;
+    light1.diffuse[2] = 0.5f;
+
+    light1.specular[0] = 1.0f;
+    light1.specular[1] = 1.0f;
+    light1.specular[2] = 1.0f;
+
     while(event_get_running(item_event))
     {
         event_handle(item_event);
@@ -202,7 +286,6 @@ int main(int argc,
         GLfloat p[16];
         matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
 
-        matrix_to_array(model, mm, 4, 4);
         //mm[12] = move;
 
         /*mm[0] = cos(M_PI * move * 50 / 180.0);
@@ -210,8 +293,25 @@ int main(int argc,
         mm[2] = sin(M_PI * move * 50/ 180.0);
         mm[10] = cos(M_PI * move * 50/ 180.0);*/
 
+        light1.position[0] = 5.0f;// * cos(move * 1.2f);
+        light1.position[1] = 0.0f;
+        light1.position[2] = 5.0f;// * sin(move * 1.2f);
+
+        light1.specular[0] = (sin(move * (double)2) + (double)1) / (double)2;
+        light1.specular[1] = (sin(move * (double)2 + (double)2 * M_PI / (double)3) + (double)1) / (double)2;
+        light1.specular[2] = (sin(move * (double)2 + (double)4 * M_PI / (double)3) + (double)1) / (double)2;
+
+        light1.diffuse[0] = 0.8 * light1.specular[0];
+        light1.diffuse[1] = 0.8 * light1.specular[1];
+        light1.diffuse[2] = 0.8 * light1.specular[2];
+
+        light1.ambient[0] = 0.4 * light1.specular[0];
+        light1.ambient[1] = 0.4 * light1.specular[1];
+        light1.ambient[2] = 0.4 * light1.specular[2];
+
         move += 0.01;
        
+
         gsl_cgp = camera_get_position(item_camera);
 
         cgp[0] = gsl_vector_get(gsl_cgp, 0);
@@ -219,13 +319,59 @@ int main(int argc,
         cgp[2] = gsl_vector_get(gsl_cgp, 2);
 
         shader_use(simple_shader);
+        matrix_to_array(model, mm, 4, 4);
         shader_set_matrix4f(simple_shader, "model", mm);
         shader_set_matrix4f(simple_shader, "view", a);
         shader_set_matrix4f(simple_shader, "projection", p);
         shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
-        shader_set_vec3(simple_shader, "lightPos", 0.0f, 5.0f * cos(move * 1.2f), 5.0f * sin(move  *1.2f));
-        shader_set_vec3(simple_shader, "lightColor", 1.0f, 1.0f, 1.0f);
-        shader_set_vec3(simple_shader, "ambientColor", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
+        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
+        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
+        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
+        shader_set_vec3(simple_shader, "material.ambient", cubeMat1.ambient[0], cubeMat1.ambient[1], cubeMat1.ambient[2]);
+        shader_set_vec3(simple_shader, "material.diffuse", cubeMat1.diffuse[0], cubeMat1.diffuse[1], cubeMat1.diffuse[2]);
+        shader_set_vec3(simple_shader, "material.specular", cubeMat1.specular[0], cubeMat1.specular[1], cubeMat1.specular[2]);
+        shader_set_float(simple_shader, "material.shininess", cubeMat1.shininess);
+        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
+
+        glBindVertexArray(VAO_polygon);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        shader_use(simple_shader);
+        matrix_to_array(model, mmc1, 4, 4);
+        mmc1[12] = 3.0f;
+        shader_set_matrix4f(simple_shader, "model", mmc1);
+        shader_set_matrix4f(simple_shader, "view", a);
+        shader_set_matrix4f(simple_shader, "projection", p);
+        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
+        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
+        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
+        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
+        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
+        shader_set_vec3(simple_shader, "material.ambient", cubeMat2.ambient[0], cubeMat2.ambient[1], cubeMat2.ambient[2]);
+        shader_set_vec3(simple_shader, "material.diffuse", cubeMat2.diffuse[0], cubeMat2.diffuse[1], cubeMat2.diffuse[2]);
+        shader_set_vec3(simple_shader, "material.specular", cubeMat2.specular[0], cubeMat2.specular[1], cubeMat2.specular[2]);
+        shader_set_float(simple_shader, "material.shininess", cubeMat2.shininess);
+        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
+
+        glBindVertexArray(VAO_polygon);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        shader_use(simple_shader);
+        matrix_to_array(model, mmc2, 4, 4);
+        mmc2[12] = -3.0f;
+        shader_set_matrix4f(simple_shader, "model", mmc2);
+        shader_set_matrix4f(simple_shader, "view", a);
+        shader_set_matrix4f(simple_shader, "projection", p);
+        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
+        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
+        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
+        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
+        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
+        shader_set_vec3(simple_shader, "material.ambient", cubeMat3.ambient[0], cubeMat3.ambient[1], cubeMat3.ambient[2]);
+        shader_set_vec3(simple_shader, "material.diffuse", cubeMat3.diffuse[0], cubeMat3.diffuse[1], cubeMat3.diffuse[2]);
+        shader_set_vec3(simple_shader, "material.specular", cubeMat3.specular[0], cubeMat3.specular[1], cubeMat3.specular[2]);
+        shader_set_float(simple_shader, "material.shininess", cubeMat3.shininess);
         shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
 
         glBindVertexArray(VAO_polygon);
@@ -233,8 +379,8 @@ int main(int argc,
 
 
         matrix_to_array(model1, mm1, 4, 4);
-        mm1[13] = 5.0f * cos(move * 1.2f);
-        mm1[14] = 5.0f * sin(move  *1.2f);
+        mm1[12] = light1.position[0];
+        mm1[14] = light1.position[2];
 
         mm1[0] = 0.2f;
         mm1[5] = 0.2f;
@@ -245,7 +391,7 @@ int main(int argc,
         shader_set_matrix4f(light_shader, "model", mm1);
         shader_set_matrix4f(light_shader, "view", a);
         shader_set_matrix4f(light_shader, "projection", p);
-        shader_set_vec3(light_shader, "lightColor", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(light_shader, "lightColor", light1.specular[0], light1.specular[1], light1.specular[2]);
 
         glBindVertexArray(VAO_polygon);
         glDrawArrays(GL_TRIANGLES, 0, 36);

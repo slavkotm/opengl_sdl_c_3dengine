@@ -24,6 +24,10 @@ void shader_set_matrix4f(struct shader *,
                          const char *,
                          GLfloat *);
 
+void shader_set_float(struct shader *,
+                      const char *,
+                      GLfloat);
+
 void shader_set_vec3(struct shader *,
                      const char *,
                      GLfloat,
