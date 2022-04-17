@@ -27,4 +27,7 @@ void vector_print(gsl_vector *,
 
 void vector_destroy(gsl_vector *);
 
+double vector_length(gsl_vector *,
+                     int);
+
 #endif

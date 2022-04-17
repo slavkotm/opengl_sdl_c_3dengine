@@ -28,6 +28,10 @@ void shader_set_float(struct shader *,
                       const char *,
                       GLfloat);
 
+void shader_set_int(struct shader *,
+                    const char *,
+                    int);
+
 void shader_set_vec3(struct shader *,
                      const char *,
                      GLfloat,

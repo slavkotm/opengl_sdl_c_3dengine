@@ -117,3 +117,11 @@ void shader_set_float(struct shader *item_shader,
     glad_glUniform1f(glad_glGetUniformLocation(get_id(item_shader), shader_name),
                      value);
 };
+
+void shader_set_int(struct shader *item_shader,
+                    const char *shader_name,
+                    int value)
+{
+    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name),
+                     value);
+};

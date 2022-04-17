@@ -99,3 +99,12 @@ double vector_dot(const gsl_vector *vector_first,
 };
 
 void vector_destroy(gsl_vector *vector) { gsl_vector_free(vector); };
+
+double vector_length(gsl_vector *vector,
+                     int vector_dimension)
+{
+    double length = 0;
+    for(int i = 0; i < vector_dimension; i++)
+        length += pow(gsl_vector_get(vector, i), 2);
+    return sqrt(length);
+};
