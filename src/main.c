@@ -414,7 +414,7 @@ i    }*/
 
     
     struct model *mdl = model_malloc();
-    model_init(mdl, NULL, "assets/De lorean DMC-12 model.obj", true);
+    model_init(mdl, NULL, "assets/models/car.obj", true);
     printf("%.4lf\n", mdl->copy_meshes->list_vertex->next->pos[0]);
 
     
