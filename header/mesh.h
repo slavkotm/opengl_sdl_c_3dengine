@@ -70,7 +70,7 @@ struct mesh *mesh_init(struct mesh *list_mesh,
 
 void vertex_push_back(struct vertex **list_vertex,
                       struct vertex *item_vertex);
-void texture_push_back(struct texture *list_texture,
+void texture_push_back(struct texture **list_texture,
                        unsigned int item_id,
                        char *item_type,
                        char *item_path);
@@ -86,6 +86,9 @@ int texture_list_size(struct texture *list_texture);
 int index_list_size(struct index *list_index);
 int mesh_list_size(struct mesh *list_mesh);
 
+void texture_item_push_back(struct texture **list_texture, struct texture* item_texture);
+struct texture *texture_get_path_item_by_index(struct texture *list_texture, int index);
+char *texture_get_path_by_index(struct texture *list_texture, int index);
 char *texture_get_type_by_index(struct texture *list_texture,
                                 int index);
 unsigned int texture_get_id_by_index(struct texture *list_texture,

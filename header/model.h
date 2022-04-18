@@ -4,6 +4,7 @@
 #include "../include/assimp/cimport.h"
 #include "../include/assimp/scene.h"
 #include "../include/assimp/postprocess.h"
+#include "../include/stb/stb_image.h"
 #include <stdbool.h>
 
 struct model 
@@ -14,12 +15,9 @@ struct model
     struct mesh *last;
     bool flag;
     bool f1;
-    bool ll;
     char *directory;
     bool gamma_correction;
 };
-
-struct mesh *get_addres(struct mesh *item_mesh);
 
 struct model *model_malloc();
 
@@ -38,15 +36,17 @@ void model_process_node(struct model *item_model,
                         struct aiNode *node,
                         const struct aiScene *scene);
 
-struct mesh *model_process_mesh(struct aiMesh *mesh,
-                               const struct aiScene *scene);
+struct mesh *model_process_mesh(struct model *item_model,
+                                struct aiMesh *mesh,
+                                const struct aiScene *scene);
 
-struct texture *model_load_material_textures(struct aiMaterial *mat,
+struct texture *model_load_material_textures(struct model *item_model,
+                                             struct aiMaterial *mat,
                                              enum aiTextureType type,
                                              char *type_name);
 
 unsigned int model_texture_from_file(const char *path,
-                                     const char *directory,
+                                     char *directory,
                                      bool gamma);
 
 char *model_substr(const char *path);
