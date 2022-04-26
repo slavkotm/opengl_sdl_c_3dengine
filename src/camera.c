@@ -1,25 +1,5 @@
 #include "../header/camera.h"
 
-struct camera
-{
-    gsl_vector *position;
-    gsl_vector *front;
-    gsl_vector *up;
-    gsl_vector *right;
-    gsl_vector *world_up;
-    
-    double yaw;
-    double pitch;
-
-    double fov;
-    double znear;
-    double zfar;
-    double aspect_ratio;
-
-    double movement_speed;
-    double sensitivity;
-};
-
 void camera_destroy(struct camera *item_camera)
 {
     gsl_vector_free(item_camera->position);

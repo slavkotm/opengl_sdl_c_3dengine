@@ -3,13 +3,14 @@
 char *model_substr(const char *path)
 {
     int size = 0;
-    while(path[size] != '0')
+    while(path[size] != '\0')
         size++;
     while(path[size] != '/')
         size--;
     char *str = malloc((size + 1) * sizeof(char));
-    for(int i = 0; i < size + 1; i++)
+    for(int i = 0; i < size; i++)
         str[i] = path[i];
+    str[size] = '\0';
     return str;
 };
 
@@ -25,7 +26,7 @@ void model_init(struct model *item_model, struct mesh *item_mesh, char *path, bo
     item_model->flag = true;
     item_model->f1 = true;
     item_model->textures_loaded = NULL;
-    model_load(item_model, path);
+    model_load(item_model, path, item_gamma_correction);
 };
 
 void model_draw(struct model *item_model, struct shader *item_shader)
@@ -59,7 +60,9 @@ unsigned int model_texture_from_file(const char *path,
                                      char *directory,
                                      bool gamma)
 {
-    char *file_name = str_cat(directory, (char *)path);
+    char *file_name = (char *)path;
+    file_name = str_cat(directory, "/");
+    file_name = str_cat(file_name, (char *)path);
 
     unsigned int texture_id;
     glGenTextures(1, &texture_id);
@@ -95,6 +98,7 @@ unsigned int model_texture_from_file(const char *path,
     }
     
     free(file_name);
+    file_name = NULL;
 
     return texture_id;
 };
@@ -239,17 +243,18 @@ struct mesh *model_process_mesh(struct model *item_model, struct aiMesh *mesh, c
 printf("ZADONTA' ESLI NE PIDOR\n");
     struct texture *diffuse_maps = model_load_material_textures(item_model, material, aiTextureType_DIFFUSE, "texture_diffuse");
     texture_item_push_back(&copy_list_texture, diffuse_maps);
-printf("ИХХИХИХИХИХХИИХИХХИХИХИХИХИХИ           %d\n", texture_list_size(copy_list_texture));
 
-/*    struct texture *specular_maps = model_load_material_textures(item_model, material, aiTextureType_SPECULAR, "texture_specular");
+    struct texture *specular_maps = model_load_material_textures(item_model, material, aiTextureType_SPECULAR, "texture_specular");
     texture_item_push_back(&list_texture, specular_maps);
-    copy_list_texture->next = list_texture;
+    printf("ИХХИХИХИХИХХИИХИХХИХИХИХИХИХИ           %d\n", texture_list_size(copy_list_texture));
+    if(copy_list_texture != NULL)
+        copy_list_texture->next = list_texture;
 
     struct texture *normal_maps = model_load_material_textures(item_model, material, aiTextureType_HEIGHT, "texture_normal");
     texture_item_push_back(&list_texture, normal_maps);
 
     struct texture *height_maps = model_load_material_textures(item_model, material, aiTextureType_AMBIENT, "texture_height");
-    texture_item_push_back(&list_texture, height_maps);*/
+    texture_item_push_back(&list_texture, height_maps);
 
     struct mesh *list_mesh = mesh_malloc();
     return mesh_init(list_mesh, copy_list_vertex, copy_list_texture, copy_list_index);
@@ -281,13 +286,13 @@ void model_process_node(struct model *item_model, struct aiNode *node, const str
         model_process_node(item_model, node->mChildren[i], scene);
 };
 
-void model_load(struct model *item_model, const char *path)
+void model_load(struct model *item_model, const char *path, bool isUV_flipped)
 {
-    const struct aiScene *scene = aiImportFile(path, 
-                                               aiProcess_CalcTangentSpace |
-                                               aiProcess_Triangulate |
-                                               aiProcess_FlipUVs
-                                               );
+    const struct aiScene *scene = NULL;
+    if(isUV_flipped)
+        scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+    else 
+        scene = aiImportFile(path, aiProcess_Triangulate | aiProcess_GenSmoothNormals | aiProcess_CalcTangentSpace);
 
     if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
@@ -297,6 +302,7 @@ void model_load(struct model *item_model, const char *path)
 
 
     item_model->directory = model_substr(path);
+    printf("%s\n", item_model->directory);
 
     model_process_node(item_model, scene->mRootNode, scene);
 

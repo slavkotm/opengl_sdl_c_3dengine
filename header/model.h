@@ -30,7 +30,8 @@ void model_draw(struct model *item_model,
                 struct shader *item_shader);
 
 void model_load(struct model *item_model,
-                const char *path);
+                const char *path,
+                bool isUV_flipped);
 
 void model_process_node(struct model *item_model, 
                         struct aiNode *node,
@@ -50,5 +51,6 @@ unsigned int model_texture_from_file(const char *path,
                                      bool gamma);
 
 char *model_substr(const char *path);
+char *str_cat(char *s1, char *s2);
 
 #endif

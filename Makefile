@@ -1,7 +1,7 @@
 SRC = src
 BIN = bin
 TARGET = main
-LIBS = -lSDL2 -lSDL_mixer -lGL -ldl -lm -lgsl -lstb -lassimp
+LIBS = -lSDL2 -lSDL2_mixer -lSDL2_ttf -lSDL2_image -lGL -ldl -lm -lgsl -lstb -lassimp
 
 SOURCE = $(wildcard $(SRC)/*.c)
 OBJECT = $(patsubst %, $(BIN)/%, $(notdir $(SOURCE:.c=.o))) 

@@ -4,9 +4,10 @@
 #include "../include/SDL2/SDL_mixer.h"
 #include <stdbool.h>
 
-bool init(bool ,
-          bool );
+#define RENDER_INIT true
+#define AUDIO_INIT false
 
+bool init(bool render_init, bool audio_init);
 void quit();
 
 #endif

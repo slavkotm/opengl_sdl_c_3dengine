@@ -38,6 +38,10 @@ void shader_set_vec3(struct shader *,
                      GLfloat,
                      GLfloat);
 
+void shader_set_vec3_(struct shader *,
+                      const char *,
+                      GLfloat *);
+
 unsigned int get_id(struct shader *);
 
 void shader_set_bool(struct shader *,

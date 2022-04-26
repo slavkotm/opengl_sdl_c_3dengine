@@ -125,3 +125,9 @@ void shader_set_int(struct shader *item_shader,
     glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name),
                      value);
 };
+void shader_set_vec3_(struct shader *item_shader,
+                      const char *shader_name,
+                      GLfloat *vec)
+{
+    glad_glUniform3fv(glad_glGetUniformLocation(get_id(item_shader), shader_name), 1, vec);
+};

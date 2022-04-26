@@ -7,7 +7,7 @@
 
 #define YAW             90.0
 #define PITCH           0.0
-#define SPEED           0.5
+#define SPEED           0.25
 #define SENSITIVITY     0.25
 #define FOV             45.0
 #define ZNEAR           0.01
@@ -25,7 +25,26 @@ enum camera_movement
     CAMERA_DOWN     = 32
 };
 
-struct camera;
+struct camera
+{
+    gsl_vector *position;
+    gsl_vector *front;
+    gsl_vector *up;
+    gsl_vector *right;
+    gsl_vector *world_up;
+    
+    double yaw;
+    double pitch;
+
+    double fov;
+    double znear;
+    double zfar;
+    double aspect_ratio;
+
+    double movement_speed;
+    double sensitivity;
+};
+
 
 void camera_constructor_init(struct camera *);
 

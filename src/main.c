@@ -4,6 +4,8 @@
 
 #include "../include/glad/glad.h"
 #include "../include/SDL2/SDL.h" 
+#include "../include/SDL2/SDL_ttf.h"
+#include "../include/SDL2/SDL_image.h"
 #include "../include/GL/gl.h"
 #include "../include/gsl/gsl_blas.h"
 #include "../include/gsl/gsl_matrix_double.h"
@@ -21,59 +23,47 @@
 #include "../header/camera.h"
 #include "../header/mesh.h"
 #include "../header/model.h"
+#include "../header/skybox.h"
+#include "../header/bloom.h"
+#include "../header/render.h"
+#include "../header/texture.h"
 
-struct Material
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
 {
-    GLfloat ambient[3];
-    GLfloat diffuse[3];
-    GLfloat specular[3];
-    GLfloat shininess;
-};
+     if (quadVAO == 0)
+     {
+         float quadVertices[] = 
+         {
+             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+         };
 
-struct PointLight
+         glGenVertexArrays(1, &quadVAO);
+         glGenBuffers(1, &quadVBO);
+         glBindVertexArray(quadVAO);
+         glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+         glEnableVertexAttribArray(0);
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    glBindVertexArray(0);
+}
+
+
+int main(int argc, char **argv)
 {
-    GLfloat position[3];
-
-    GLfloat ambient[3];
-    GLfloat diffuse[3];
-    GLfloat specular[3];
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-struct DirectionalLight
-{
-    GLfloat direction[3];
-
-    GLfloat ambient[3];
-    GLfloat diffuse[3];
-    GLfloat specular[3];
-};
-
-struct SpotLight
-{
-    GLfloat position[3];
-    GLfloat direction[3];
-    GLfloat cutoff;
-
-    GLfloat ambient[3];
-    GLfloat diffuse[3];
-    GLfloat specular[3];
-
-    float constant;
-    float linear;
-    float quadratic;
-};
-
-int main(int argc, 
-         char **argv)
-{
-    init(true, false);
-    SDL_Window *window = window_create("OpenGL + C + SDL", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, SDL_WINDOW_OPENGL);
+    init(RENDER_INIT, AUDIO_INIT);
+    SDL_Window *window = window_create(WINDOW_NAME, WINDOW_X_POSITION_SCREEN, WINDOW_Y_POSITION_SCREEN, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_OPENGL | SDL_RENDERER_ACCELERATED);
     SDL_GLContext gl_context = context_create(window);
-    context_set(3, 3);
+    context_set(MAJOR_VERSION, MINOR_VERSION);
     gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress);
 
     gsl_vector *vector_position = gsl_vector_alloc(3);
@@ -81,13 +71,13 @@ int main(int argc,
     gsl_vector *vector_up = gsl_vector_alloc(3);
     gsl_vector *vector_world_up = gsl_vector_alloc(3);
 
-    gsl_vector_set(vector_position, 0, (double)0);
-    gsl_vector_set(vector_position, 1, (double)0);
-    gsl_vector_set(vector_position, 2, (double)-2);
+    gsl_vector_set(vector_position, 0, (double)0.258735);
+    gsl_vector_set(vector_position, 1, (double)0.615317);
+    gsl_vector_set(vector_position, 2, (double)-11.536388);
 
-    gsl_vector_set(vector_front, 0, (double)0);
-    gsl_vector_set(vector_front, 1, (double)0);
-    gsl_vector_set(vector_front, 2, (double)-1);
+    gsl_vector_set(vector_front, 0, (double)-0.043549);
+    gsl_vector_set(vector_front, 1, (double)-0.056693);
+    gsl_vector_set(vector_front, 2, (double)0.997441);
 
     gsl_vector_set(vector_up, 0, (double)0);
     gsl_vector_set(vector_up, 1, (double)1);
@@ -110,6 +100,8 @@ int main(int argc,
                                   SPEED,
                                   SENSITIVITY);
 
+    gsl_matrix *model = camera_get_model_matrix();
+
     struct event *item_event = event_malloc();
     event_init(item_event, 
                item_camera,
@@ -124,41 +116,182 @@ int main(int argc,
                false,
                false);
 
-    gsl_matrix *model = camera_get_model_matrix();
 
-    struct shader *simple_shader = shader_malloc();
-    struct shader *light_shader = shader_malloc();
     struct shader *model_shader = shader_malloc();
+    struct shader *skybox_shader = shader_malloc();
 
-    shader_init(simple_shader, "shaders/basic.vert", "shaders/basic.frag", "r");
-    shader_init(light_shader, "shaders/light.vert", "shaders/light.frag", "r");
-    shader_init(model_shader, "shaders/model.vert", "shaders/model.frag", "r");
+    shader_init(skybox_shader, "shaders/skybox.vert", "shaders/skybox.frag", "r");
 
     SDL_ShowCursor(SDL_DISABLE);
     SDL_SetRelativeMouseMode(SDL_TRUE);
-    SDL_WarpMouseInWindow(window, 640, 360);
+    SDL_WarpMouseInWindow(window, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    float move = 0.01f;
-    glad_glEnable(GL_DEPTH_TEST);
+    struct cubemap *skybox_item = cubemap_malloc();
+    cubemap_mesh(&skybox_item);
+    cubemap_init(skybox_item);
+    skybox_item->cubemap_texture = cubemap_load(&skybox_item, 6);
+    shader_use(skybox_shader);
+    shader_set_int(skybox_shader, "skybox", 0);
 
-    struct model *mdl = model_malloc();
-    mdl->copy_meshes = mdl->meshes = NULL;
-    mdl->textures_loaded = NULL;
-    model_init(mdl, NULL, "assets/models/car.obj", true);
+
+    GLuint hdrFBO;
+    glGenFramebuffers(1, &hdrFBO);
+    glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+	
+    unsigned int colorBuffers[2];
+    glGenTextures(2, colorBuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);  
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, colorBuffers[i], 0);
+    }
+	
+    unsigned int rboDepth;
+    glGenRenderbuffers(1, &rboDepth);
+    glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, SCREEN_WIDTH, SCREEN_HEIGHT);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+    
+    unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+    glDrawBuffers(2, attachments);
+	
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        printf("Framebuffer not complete!\n");
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    unsigned int pingpongFBO[2];
+    unsigned int pingpongColorbuffers[2];
+    glGenFramebuffers(2, pingpongFBO);
+    glGenTextures(2, pingpongColorbuffers);
+    for (unsigned int i = 0; i < 2; i++)
+    {
+        glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[i]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_FLOAT, NULL);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);      
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongColorbuffers[i], 0);
+        
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+            printf("Framebuffer not complete!\n");;
+    }
+    struct model *sp = model_malloc();
+    struct model *pl = model_malloc();
+    struct model *slk = model_malloc();
+    struct model *koleso_front = model_malloc();
+    struct model *koleso_back = model_malloc();
+    struct model *axes_front = model_malloc();
+    struct model *axes_back = model_malloc();
+    struct model *lamp_front = model_malloc();
+    struct model *lamp_back_orange = model_malloc();
+    struct model *lamp_back_yellow = model_malloc();
+    struct model *plane = model_malloc();
+    struct model *wireframe = model_malloc();
+
+    model_init(sp, NULL, "assets/models/sphere/sphere.obj", true);
+    model_init(pl, NULL, "assets/models/plane/plane.obj", true);
+    model_init(slk, NULL, "assets/models/car/frame/frame.obj", true);
+    model_init(koleso_front, NULL, "assets/models/car/wheels/wheel_front/wheel_front.obj", true);
+    model_init(koleso_back, NULL, "assets/models/car/wheels/wheel_back/wheel_back.obj", true);
+    model_init(axes_front, NULL, "assets/models/car/axes/axis_front/axis_front.obj", true);
+    model_init(axes_back, NULL, "assets/models/car/axes/axis_back/axis_back.obj", true);
+    model_init(lamp_front, NULL, "assets/models/car/lamps/lamp_front/lamp_front.obj", true);
+    model_init(lamp_back_orange, NULL, "assets/models/car/lamps/lamp_back/lamps_orange/lamp_orange.obj", true);
+    model_init(lamp_back_yellow, NULL, "assets/models/car/lamps/lamp_back/lamps_yellow/lamp_yellow.obj", true);
+    model_init(plane, NULL, "assets/models/plane/plane.obj", true);
+    model_init(wireframe, NULL, "assets/models/car/wireframe/wireframe.obj", true);
+
+    GLfloat aslk[16];
+    GLfloat rotate_wheels[16];
+    GLfloat ppl[16];
+    float move = 0.0f;
+
+    struct shader *shader_bloom = shader_malloc();
+    struct shader *shader_blur = shader_malloc();
+    struct shader *shader_bloom_final = shader_malloc();
+    struct shader *shader_light = shader_malloc();
+    shader_init(shader_bloom, "shaders/bloom.vs", "shaders/bloom.fs", "r");
+    shader_init(shader_blur, "shaders/blur.vs", "shaders/blur.fs", "r");
+    shader_init(shader_bloom_final, "shaders/bloom_final.vs", "shaders/bloom_final.fs", "r");
+    shader_init(shader_light, "shaders/bloom.vs", "shaders/light_box.fs", "r");
 
     
-    struct texture *t = NULL, *tp = NULL;
-/*    texture_push_back(&tp, 1, "1t", "1p");
-    texture_push_back(&t, 2, "2t", "2p");
-    tp->next = t;
-    texture_push_back(&t, 3, "3t", "3p");
-    texture_push_back(&t, 4, "4t", "4p");
-    texture_push_back(&t, 5, "5t", "5p");
-    texture_push_back(&t, 6, "6t", "6p");
-    printf("%d\n", texture_list_size(tp));*/
+    struct bloom *bloom_item = bloom_malloc();
+    bloom_hdr_buffer(&bloom_item);
+    bloom_color_buffers(&bloom_item);
+    bloom_rbo_depth(&bloom_item);
+    bloom_attachments(&bloom_item);
+    bloom_ping_pong_buffers(&bloom_item);
+    bloom_light_positions(&bloom_item);
+    bloom_light_colors(&bloom_item);
 
 
-    GLfloat mdls[16] ;
+    shader_use(shader_bloom);
+    shader_set_int(shader_bloom, "diffuseTexture", 0);
+    shader_use(shader_blur);
+    shader_set_int(shader_blur, "image", 0);
+    shader_use(shader_bloom_final);
+    shader_set_int(shader_bloom_final, "scene", 0);
+    shader_set_int(shader_bloom_final, "bloomBlur", 1);
+    
+    glEnable(GL_DEPTH_TEST);
+
+    glEnable( GL_MULTISAMPLE );
+    float light_colors[6][3];
+    light_colors[0][0] = 10.0f;
+    light_colors[0][1] = 10.0f;
+    light_colors[0][2] = 0.0f;
+
+    light_colors[1][0] = 2.0f;
+    light_colors[1][1] = 0.8f;
+    light_colors[1][2] = 1.898f;
+
+    light_colors[2][0] = 1.2f;
+    light_colors[2][1] = 1.0f;
+    light_colors[2][2] = 1.4f;
+
+    light_colors[3][0] = 0.0f;
+    light_colors[3][1] = 2.0f;
+    light_colors[3][2] = 2.0f;
+
+    light_colors[4][0] = 10.0f;
+    light_colors[4][1] = 0.7f;
+    light_colors[4][2] = 0.4f;
+
+    light_colors[5][0] = 5.0f;
+    light_colors[5][1] = 0.0f;
+    light_colors[5][2] = 0.0f;
+
+    float light_positions[4][3];
+    light_positions[0][0] = 0.0f;
+    light_positions[0][1] = 0.5f;
+    light_positions[0][2] = 1.5f;
+
+    light_positions[1][0] = 0.0f;
+    light_positions[1][1] = 3.5f;
+    light_positions[1][2] = 13.0f;
+
+    light_positions[2][0] = 3.0f;
+    light_positions[2][1] = 0.5f;
+    light_positions[2][2] = 1.0f;
+
+    light_positions[3][0] =-0.8f;
+    light_positions[3][1] = 2.4f;
+    light_positions[3][2] =-1.0f;
+
+    struct shader *lighting_shader = shader_malloc();
+    shader_init(lighting_shader, "shaders/material.vert", "shaders/material.frag", "r");
+
+    SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
+    float pw[10][16];
 
     while(event_get_running(item_event))
     {
@@ -167,204 +300,178 @@ int main(int argc,
         camera_rotate(item_camera, event_get_x_off_set(item_event), -event_get_y_off_set(item_event));
         camera_set_cull_face_mode(event_get_cull_face(item_event));
         camera_set_polygon_mode(event_get_space(item_event));
-                
-        glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-        glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+        
         GLfloat a[16]; 
         matrix_to_array(camera_get_view_matrix(item_camera), a, 4, 4);
+
+        GLfloat vvvv[16]; 
+        matrix_to_array(camera_get_view_matrix(item_camera), vvvv, 4, 4);
         
         GLfloat p[16];
         matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
-/*
-        //mm[12] = move;
 
-        mm[0] = cos(M_PI * move * 50 / 180.0);
-        mm[8] = -sin(M_PI * move * 50 / 180.0);
-        mm[2] = sin(M_PI * move * 50/ 180.0);
-        mm[10] = cos(M_PI * move * 50/ 180.0);
 
-        const Uint8 *key_state = SDL_GetKeyboardState(NULL); 
-        if(key_state[SDL_SCANCODE_UP])
-            mmmoveee -= 0.05;
-        if(key_state[SDL_SCANCODE_DOWN])
-            mmmoveee += 0.05;
-        if(key_state[SDL_SCANCODE_LEFT])
-            mmmrl -= 0.05;
-        if(key_state[SDL_SCANCODE_RIGHT])
-            mmmrl += 0.05;
-        if(key_state[SDL_SCANCODE_PAGEUP])
-            mmmud += 0.05;
-        if(key_state[SDL_SCANCODE_PAGEDOWN])
-            mmmud -= 0.05;
+        glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        light1.position[0] = mmmrl;// * cos(move * 1.2f);
-        light1.position[1] = mmmud;
-        light1.position[2] = mmmoveee;// * sin(move * 1.2f);
+        glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shader_use(shader_bloom);
+        shader_set_matrix4f(shader_bloom, "projection", p);
+        shader_set_matrix4f(shader_bloom, "view", a);
+        glActiveTexture(GL_TEXTURE0);
 
-        light1.specular[0] = (sin(move * (double)2) + (double)1);
-        light1.specular[1] = (sin(move * (double)2 + (double)2 * M_PI / (double)3) + (double)1);
-        light1.specular[2] = (sin(move * (double)2 + (double)4 * M_PI / (double)3) + (double)1) ;
+        shader_use(lighting_shader);
+        shader_set_vec3(lighting_shader, "light.position", 1.0f, 1.0f, 1.0f);
+        shader_set_vec3(lighting_shader, "viewPos", item_camera->position->data[0], item_camera->position->data[1], item_camera->position->data[2]);
 
-        light1.diffuse[0] = 0.8 * light1.specular[0];
-        light1.diffuse[1] = 0.8 * light1.specular[1];
-        light1.diffuse[2] = 0.8 * light1.specular[2];
+        shader_set_vec3(lighting_shader, "light.ambient", 0.12f, 0.01f, 0.2f);
+        shader_set_vec3(lighting_shader, "light.diffuse", 0.6f, 0.5f, 1.0f);
+        shader_set_vec3(lighting_shader, "light.specular", 2.0f, 0.8f, 1.898f);
 
-        light1.ambient[0] = 0.4 * light1.specular[0];
-        light1.ambient[1] = 0.4 * light1.specular[1];
-        light1.ambient[2] = 0.4 * light1.specular[2];
-        
-        move += 0.01;
-       
-        for(int i = 0; i < count_cube; i++)
-        {
-        gsl_cgp = camera_get_position(item_camera);
+        shader_set_vec3(lighting_shader, "material.ambient", 0.25f, 0.25f, 0.25f);
+        shader_set_vec3(lighting_shader, "material.diffuse", 0.4f, 0.4f, 0.4f);
+        shader_set_vec3(lighting_shader, "material.specular", 0.774597f, 0.774597f, 0.774597f);
+        shader_set_float(lighting_shader, "material.shininess", 76.8f);
 
-        cgp[0] = gsl_vector_get(gsl_cgp, 0);
-        cgp[1] = gsl_vector_get(gsl_cgp, 1);
-        cgp[2] = gsl_vector_get(gsl_cgp, 2);
+        matrix_to_array(model, aslk, 4, 4);
+        aslk[0] = 0.05f;
+        aslk[5] = 0.05f;
+        aslk[10] = 0.05f;
+        aslk[13] = 0.5f;
+        shader_use(lighting_shader);
+        shader_set_matrix4f(lighting_shader, "model", aslk);
+        shader_set_matrix4f(lighting_shader, "view", a);
+        shader_set_matrix4f(lighting_shader, "projection", p);
+        shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
+        model_draw(slk, lighting_shader);
 
-        shader_use(simple_shader);
 
-        //matrix_to_array(model, models[i], 4, 4);
-        
-
-        shader_set_matrix4f(simple_shader, "model", models[i]);
-        shader_set_matrix4f(simple_shader, "view", a);
-        shader_set_matrix4f(simple_shader, "projection", p);
-        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
-        shader_set_vec3(simple_shader, "light.position", light2.direction[0], light2.direction[1], light2.direction[2]);
-
-        shader_set_vec3(simple_shader, "light.ambient", light2.ambient[0], light2.ambient[1], light2.ambient[2]);
-        shader_set_vec3(simple_shader, "light.diffuse", light2.diffuse[0], light2.diffuse[1], light2.diffuse[2]);
-        shader_set_vec3(simple_shader, "light.specular", light2.specular[0], light2.specular[1], light2.specular[2]);
-
-        shader_set_vec3(simple_shader, "material.ambient", materials[(int)indexes[i]].ambient[0], materials[(int)indexes[i]].ambient[1], materials[(int)indexes[i]].ambient[2]);
-        shader_set_vec3(simple_shader, "material.diffuse", materials[(int)indexes[i]].diffuse[0], materials[(int)indexes[i]].diffuse[1], materials[(int)indexes[i]].diffuse[2]);
-        shader_set_vec3(simple_shader, "material.specular", materials[(int)indexes[i]].specular[0], materials[(int)indexes[i]].specular[1], materials[(int)indexes[i]].specular[2]);
-        shader_set_float(simple_shader, "material.shininess", materials[(int)indexes[i]].shininess);
-
-        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
-
-        //shader_set_float(simple_shader, "light.constant", light1.constant);
-        //shader_set_float(simple_shader, "light.linear", light1.linear);
-        //shader_set_float(simple_shader, "light.quadratic", light1.quadratic);
-        shader_set_int(simple_shader, "light.type", 1);
-
-        //glBindVertexArray(VAO_polygon);
-        //glDrawArrays(GL_TRIANGLES, 0, 36);
-        }*/
-
-        matrix_to_array(model, mdls, 4, 4);
-  //      mdls[0] = 0.1;
-        //mdls[5] = ;
- //       mdls[10] = 0.08;
+        matrix_to_array(model, aslk, 4, 4);
+        aslk[0] = 0.05f;
+        aslk[5] = 0.05f;
+        aslk[10] = 0.05f;
+        aslk[13] = 0.5f;
         shader_use(model_shader);
-        shader_set_matrix4f(model_shader, "model", mdls);
+        shader_set_matrix4f(model_shader, "model", aslk);
         shader_set_matrix4f(model_shader, "view", a);
         shader_set_matrix4f(model_shader, "projection", p);
-        shader_set_bool(model_shader, "wireframeMode", event_get_space(item_event));
-        model_draw(mdl, model_shader);
-        //glBindVertexArray(VAO_polygon);
-        //glDrawElements(GL_TRIANGLES, size_index, GL_UNSIGNED_INT, 0);
-        //glBindVertexArray(0);
-        //glBindVertexArray(VAO_polygon1);
-        //glDrawElements(GL_TRIANGLES, size_index1, GL_UNSIGNED_INT, 0);
-        //glBindVertexArray(0);
+        shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
+        model_draw(koleso_front, model_shader);
 
-        /*gsl_cgp = camera_get_position(item_camera);
+        aslk[0] = 0.05f;
+        aslk[5] = 0.05f;
+        aslk[10] = 0.05f;
+        aslk[13] = 0.5f;
+        shader_use(model_shader);
+        shader_set_matrix4f(model_shader, "model", aslk);
+        shader_set_matrix4f(model_shader, "view", a);
+        shader_set_matrix4f(model_shader, "projection", p);
+        shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
+        model_draw(koleso_back, model_shader);
+        float move = 8.0f;
+        for(int i = 0; i < 10; i++)
+        {
+        }
 
-        cgp[0] = gsl_vector_get(gsl_cgp, 0);
-        cgp[1] = gsl_vector_get(gsl_cgp, 1);
-        cgp[2] = gsl_vector_get(gsl_cgp, 2);
+        for(int i = 0; i < 10; i++)
+        {
+        matrix_to_array(model, pw[i], 4, 4);
+        pw[i][0] = 0.5f;
+        pw[i][5] = 0.5f;
+        pw[i][10] = 0.5f;
+        pw[i][14] = move;
+        move += 8.0f;
+        shader_use(lighting_shader);
+        shader_set_matrix4f(lighting_shader, "model", pw[i]);
+        shader_set_matrix4f(lighting_shader, "view", a);
+        shader_set_matrix4f(lighting_shader, "projection", p);
+        model_draw(plane, lighting_shader);
 
-        shader_use(simple_shader);
-        matrix_to_array(model, mm, 4, 4);
-        shader_set_matrix4f(simple_shader, "model", mm);
-        shader_set_matrix4f(simple_shader, "view", a);
-        shader_set_matrix4f(simple_shader, "projection", p);
-        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
-        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
+        shader_use(shader_light);
+        shader_set_matrix4f(shader_light, "model", pw[i]);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[1]);
+        model_draw(wireframe, shader_light);
+        }
 
-        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
-        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
-        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
+        shader_use(shader_light);
+        pw[9][14] += 10.0f;
+        pw[9][0] = 2.0f;
+        pw[9][5] = 2.0f;
+        pw[9][10] = 2.0f;
+        shader_set_matrix4f(shader_light, "model", pw[9]);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[1]);
+        model_draw(sp, shader_light);
 
-        shader_set_vec3(simple_shader, "material.ambient", cubeMat1.ambient[0], cubeMat1.ambient[1], cubeMat1.ambient[2]);
-        shader_set_vec3(simple_shader, "material.diffuse", cubeMat1.diffuse[0], cubeMat1.diffuse[1], cubeMat1.diffuse[2]);
-        shader_set_vec3(simple_shader, "material.specular", cubeMat1.specular[0], cubeMat1.specular[1], cubeMat1.specular[2]);
-        shader_set_float(simple_shader, "material.shininess", cubeMat1.shininess);
+        aslk[0] = 0.05f;
+        aslk[5] = 0.05f;
+        aslk[10] = 0.05f;
+        shader_set_matrix4f(shader_light, "model", aslk);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
+        model_draw(axes_front, shader_light);
 
-        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
+        shader_set_matrix4f(shader_light, "model", aslk);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
+        model_draw(axes_back, shader_light);
 
-        shader_set_float(simple_shader, "light.constant", light1.constant);
-        shader_set_float(simple_shader, "light.linear", light1.linear);
-        shader_set_float(simple_shader, "light.quadratic", light1.quadratic);
+        shader_set_matrix4f(shader_light, "model", aslk);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[4]);
+        model_draw(lamp_front, shader_light);
 
-        glBindVertexArray(VAO_polygon);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        shader_set_matrix4f(shader_light, "model", aslk);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[5]);
+        model_draw(lamp_back_orange, shader_light);
 
+        shader_set_matrix4f(shader_light, "model", aslk);
+        shader_set_matrix4f(shader_light, "view", a);
+        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[4]);
+        model_draw(lamp_back_yellow, shader_light);
 
-        shader_use(simple_shader);
-        matrix_to_array(model, mmc1, 4, 4);
-        mmc1[12] = 3.0f;
-        shader_set_matrix4f(simple_shader, "model", mmc1);
-        shader_set_matrix4f(simple_shader, "view", a);
-        shader_set_matrix4f(simple_shader, "projection", p);
-        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
-        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
-        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
-        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
-        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
-        shader_set_vec3(simple_shader, "material.ambient", cubeMat2.ambient[0], cubeMat2.ambient[1], cubeMat2.ambient[2]);
-        shader_set_vec3(simple_shader, "material.diffuse", cubeMat2.diffuse[0], cubeMat2.diffuse[1], cubeMat2.diffuse[2]);
-        shader_set_vec3(simple_shader, "material.specular", cubeMat2.specular[0], cubeMat2.specular[1], cubeMat2.specular[2]);
-        shader_set_float(simple_shader, "material.shininess", cubeMat2.shininess);
-        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
+        shader_use(skybox_shader);
+        vvvv[3] = vvvv[7] = vvvv[11] = vvvv[12] = vvvv[13] = vvvv[14] = vvvv[15] = 0.0f;
+        shader_set_matrix4f(skybox_shader, "view", vvvv);
+        shader_set_matrix4f(skybox_shader, "projection", p);
+        cubemap_skybox_draw(&skybox_item);
 
-        glBindVertexArray(VAO_polygon);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        
+        bool horizontal = true, first_iteration = true;
+        unsigned int amount = 10;
+        shader_use(shader_blur);
+        for(unsigned int i = 0; i < amount; i++)
+        {
+            glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+            shader_set_int(shader_blur, "horizontal", horizontal);
+            glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
+            renderQuad();
+            horizontal = !horizontal;
+            if(first_iteration)
+                first_iteration = false;
+        }
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        shader_use(simple_shader);
-        matrix_to_array(model, mmc2, 4, 4);
-        mmc2[12] = -3.0f;
-        shader_set_matrix4f(simple_shader, "model", mmc2);
-        shader_set_matrix4f(simple_shader, "view", a);
-        shader_set_matrix4f(simple_shader, "projection", p);
-        shader_set_bool(simple_shader, "wireframeMode", event_get_space(item_event));
-        shader_set_vec3(simple_shader, "light.position", light1.position[0], light1.position[1], light1.position[2]);
-        shader_set_vec3(simple_shader, "light.ambient", light1.ambient[0], light1.ambient[1], light1.ambient[2]);
-        shader_set_vec3(simple_shader, "light.diffuse", light1.diffuse[0], light1.diffuse[1], light1.diffuse[2]);
-        shader_set_vec3(simple_shader, "light.specular", light1.specular[0], light1.specular[1], light1.specular[2]);
-        shader_set_vec3(simple_shader, "material.ambient", cubeMat3.ambient[0], cubeMat3.ambient[1], cubeMat3.ambient[2]);
-        shader_set_vec3(simple_shader, "material.diffuse", cubeMat3.diffuse[0], cubeMat3.diffuse[1], cubeMat3.diffuse[2]);
-        shader_set_vec3(simple_shader, "material.specular", cubeMat3.specular[0], cubeMat3.specular[1], cubeMat3.specular[2]);
-        shader_set_float(simple_shader, "material.shininess", cubeMat3.shininess);
-        shader_set_vec3(simple_shader, "viewPos", cgp[0], cgp[1], cgp[2]);
-
-        glBindVertexArray(VAO_polygon);
-        glDrawArrays(GL_TRIANGLES, 0, 36);*/
-
-
-/*        matrix_to_array(model1, mm1, 4, 4);
-        mm1[12] = light1.position[0];
-        mm1[13] = light1.position[1];
-        mm1[14] = light1.position[2];
-
-        mm1[0] = 0.1f;
-        mm1[5] = 0.1f;
-        mm1[10] = 0.1f;
-        //mm[12] = move;
-
-        shader_use(light_shader);
-        shader_set_matrix4f(light_shader, "model", mm1);
-        shader_set_matrix4f(light_shader, "view", a);
-        shader_set_matrix4f(light_shader, "projection", p);
-        shader_set_vec3(light_shader, "lightColor", light1.specular[0], light1.specular[1], light1.specular[2]);*/
-
-//        glBindVertexArray(VAO_polygon);
-//        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        shader_use(shader_bloom_final);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, colorBuffers[0]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
+        shader_set_int(shader_bloom_final, "bloom", true);
+        shader_set_float(shader_bloom_final, "exposure", 1.0f);
+        renderQuad();
 
         SDL_GL_SwapWindow(window);
     }
