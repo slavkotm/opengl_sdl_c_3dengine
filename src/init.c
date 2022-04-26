@@ -9,7 +9,6 @@ bool init(bool render_init, bool audio_init)
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) 
         {
             printf("Unable to initialize SDL: %s\n", SDL_GetError());
-
             flag = false;
         }
     }

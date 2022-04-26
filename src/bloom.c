@@ -5,6 +5,11 @@ struct bloom *bloom_malloc()
     return (struct bloom *)malloc(sizeof(struct bloom)); 
 };
 
+void bloom_init(struct bloom **bloom_item)
+{
+    (*bloom_item)->quad_VAO = 0;
+};
+
 void bloom_hdr_buffer(struct bloom **bloom_item)
 {
     glGenFramebuffers(1, &(*bloom_item)->hdr_FBO);
@@ -108,4 +113,30 @@ void bloom_light_positions(struct bloom **bloom_item)
     (*bloom_item)->light_positions[3][0] =-0.8f;
     (*bloom_item)->light_positions[3][1] = 2.4f;
     (*bloom_item)->light_positions[3][2] =-1.0f;
+};
+
+void bloom_render_quad(struct bloom **bloom_item)
+{
+     if((*bloom_item)->quad_VAO == 0)
+     {
+         float quadVertices[] =
+         {
+             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
+             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+         };
+         glGenVertexArrays(1, &(*bloom_item)->quad_VAO);
+         glGenBuffers(1, &(*bloom_item)->quad_VBO);
+         glBindVertexArray((*bloom_item)->quad_VAO);
+         glBindBuffer(GL_ARRAY_BUFFER, (*bloom_item)->quad_VBO);
+         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+         glEnableVertexAttribArray(0);
+         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+         glEnableVertexAttribArray(1);
+         glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+     }
+     glBindVertexArray((*bloom_item)->quad_VAO);
+     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+     glBindVertexArray(0);
 };

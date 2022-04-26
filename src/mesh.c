@@ -151,7 +151,6 @@ void vertex_push_back(struct vertex **list_vertex, struct vertex *item_vertex)
 
 void texture_item_push_back(struct texture **list_texture, struct texture* item_texture)
 {
-    printf("texture_item_push_back\n");
     if(*list_texture == NULL)
     {
         (*list_texture) = item_texture;

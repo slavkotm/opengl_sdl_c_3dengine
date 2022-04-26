@@ -14,10 +14,7 @@ void shader_use(struct shader *item_shader) { glad_glUseProgram(item_shader->id)
 
 struct shader* shader_malloc() { return (struct shader*)malloc(sizeof(struct shader)); };
 
-void shader_init(struct shader *item_shader,
-                 const char *str_vertex_shader,
-                 const char *str_fragment_shader,
-                 const char *flag)
+void shader_init(struct shader *item_shader, const char *str_vertex_shader, const char *str_fragment_shader, const char *flag)
 {
     /*vertex shader*/
     const GLchar *vertex_shader_source = get_str_shader(str_vertex_shader, flag); 
@@ -62,9 +59,7 @@ void check_compile_shader(unsigned int shader,
         if(!success)
         {
             glad_glGetShaderInfoLog(shader, 1024, NULL, infoLog);
-            printf("ERROR::SHADER_COMPILATION_ERROR of type: %s\n %s\n", type, 
-                                                                         infoLog);
-
+            printf("ERROR::SHADER_COMPILATION_ERROR of type: %s\n %s\n", type, infoLog);
         }
     }
     else 
@@ -73,61 +68,36 @@ void check_compile_shader(unsigned int shader,
         if(!success)
         {
             glad_glGetProgramInfoLog(shader, 1024, NULL, infoLog);
-            printf("ERROR::SHADER_LINKING_ERROR of type: %s\n %s\n", type, 
-                                                                     infoLog);
+            printf("ERROR::SHADER_LINKING_ERROR of type: %s\n %s\n", type, infoLog);
         }
     }
 };
 
-void shader_set_matrix4f(struct shader *item_shader,
-                         const char *shader_name,
-                         GLfloat *matrix)
+void shader_set_matrix4f(struct shader *item_shader, const char *shader_name, GLfloat *matrix)
 {
-    glad_glUniformMatrix4fv(glad_glGetUniformLocation(get_id(item_shader),
-                                                      shader_name),
-                            1,
-                            GL_FALSE,
-                            (const GLfloat*)matrix);
+    glad_glUniformMatrix4fv(glad_glGetUniformLocation(get_id(item_shader), shader_name), 1, GL_FALSE, (const GLfloat*)matrix);
 };
 
-void shader_set_vec3(struct shader *item_shader,
-                     const char *shader_name,
-                     GLfloat x,
-                     GLfloat y,
-                     GLfloat z)
+void shader_set_vec3(struct shader *item_shader, const char *shader_name, GLfloat x, GLfloat y, GLfloat z)
 {
-    glad_glUniform3f(glad_glGetUniformLocation(get_id(item_shader), shader_name),
-                     x,
-                     y,
-                     z);
+    glad_glUniform3f(glad_glGetUniformLocation(get_id(item_shader), shader_name), x, y, z);
 };
 
-void shader_set_bool(struct shader *item_shader,
-                     const char *shader_name,
-                     bool value)
+void shader_set_bool(struct shader *item_shader, const char *shader_name, bool value)
 {
-    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name),
-                     value);
+    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name), value);
 };
 
-void shader_set_float(struct shader *item_shader,
-                      const char *shader_name,
-                      GLfloat value)
+void shader_set_float(struct shader *item_shader, const char *shader_name, GLfloat value)
 {
-    glad_glUniform1f(glad_glGetUniformLocation(get_id(item_shader), shader_name),
-                     value);
+    glad_glUniform1f(glad_glGetUniformLocation(get_id(item_shader), shader_name), value);
 };
 
-void shader_set_int(struct shader *item_shader,
-                    const char *shader_name,
-                    int value)
+void shader_set_int(struct shader *item_shader, const char *shader_name, int value)
 {
-    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name),
-                     value);
+    glad_glUniform1i(glad_glGetUniformLocation(get_id(item_shader), shader_name), value);
 };
-void shader_set_vec3_(struct shader *item_shader,
-                      const char *shader_name,
-                      GLfloat *vec)
+void shader_set_vec3_(struct shader *item_shader, const char *shader_name, GLfloat *vec)
 {
     glad_glUniform3fv(glad_glGetUniformLocation(get_id(item_shader), shader_name), 1, vec);
 };

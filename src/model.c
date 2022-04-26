@@ -68,7 +68,6 @@ unsigned int model_texture_from_file(const char *path,
     glGenTextures(1, &texture_id);
 
     int width, height, nr_components;
-    printf("%s\n", file_name);
     unsigned char *data = stbi_load(file_name, &width, &height, &nr_components, 0);
     if(data)
     {
@@ -164,7 +163,6 @@ struct texture *model_load_material_textures(struct model *item_model, struct ai
             }
         }
     }
-    printf("model_load_material_textures\n");
 
     return textures;
 };
@@ -240,13 +238,11 @@ struct mesh *model_process_mesh(struct model *item_model, struct aiMesh *mesh, c
 
     struct aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
     
-printf("ZADONTA' ESLI NE PIDOR\n");
     struct texture *diffuse_maps = model_load_material_textures(item_model, material, aiTextureType_DIFFUSE, "texture_diffuse");
     texture_item_push_back(&copy_list_texture, diffuse_maps);
 
     struct texture *specular_maps = model_load_material_textures(item_model, material, aiTextureType_SPECULAR, "texture_specular");
     texture_item_push_back(&list_texture, specular_maps);
-    printf("ИХХИХИХИХИХХИИХИХХИХИХИХИХИХИ           %d\n", texture_list_size(copy_list_texture));
     if(copy_list_texture != NULL)
         copy_list_texture->next = list_texture;
 
@@ -302,7 +298,6 @@ void model_load(struct model *item_model, const char *path, bool isUV_flipped)
 
 
     item_model->directory = model_substr(path);
-    printf("%s\n", item_model->directory);
 
     model_process_node(item_model, scene->mRootNode, scene);
 

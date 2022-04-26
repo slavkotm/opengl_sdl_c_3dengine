@@ -1,9 +1,6 @@
 #include "../header/matrix.h"
 
-float *matrix_to_array(gsl_matrix *matrix,
-                       float *array,
-                       int row,
-                       int col)
+float *matrix_to_array(gsl_matrix *matrix, float *array, int row, int col)
 {
     int k = 0;
     for(int i = 0; i < row; i++)
@@ -14,13 +11,10 @@ float *matrix_to_array(gsl_matrix *matrix,
             k++;
         }
     }
-
     return array;
 };
 
-gsl_matrix *matrix_look_at(gsl_vector *eye,
-                           gsl_vector *center,
-                           gsl_vector *up)
+gsl_matrix *matrix_look_at(gsl_vector *eye, gsl_vector *center, gsl_vector *up)
 {
     gsl_matrix *matrix_result = gsl_matrix_alloc(4, 4);
     gsl_matrix_set_zero(matrix_result);
@@ -57,10 +51,7 @@ gsl_matrix *matrix_look_at(gsl_vector *eye,
     return matrix_result;
 };
 
-gsl_matrix *matrix_perspective(double FOV,
-                               double ASPECT,
-                               double ZNEAR,
-                               double ZFAR)
+gsl_matrix *matrix_perspective(double FOV, double ASPECT, double ZNEAR, double ZFAR)
 {
     gsl_matrix *matrix_result = gsl_matrix_alloc(4, 4);
     gsl_matrix_set_zero(matrix_result);
@@ -77,9 +68,7 @@ gsl_matrix *matrix_perspective(double FOV,
 
 void matrix_destroy(gsl_matrix *matrix) { gsl_matrix_free(matrix); };
 
-void matrix_print(gsl_matrix *matrix,
-                  int row,
-                  int col)
+void matrix_print(gsl_matrix *matrix, int row, int col)
 {
     for(int i = 0; i < row; i++)
     {
@@ -102,7 +91,4 @@ gsl_matrix *matrix_model()
     return matrix_result;
 };
 
-void matrix_set_value(gsl_matrix *matrix,
-                      int i,
-                      int j,
-                      double value) { gsl_matrix_set(matrix, i, j, value); };
+void matrix_set_value(gsl_matrix *matrix, int i, int j, double value) { gsl_matrix_set(matrix, i, j, value); };

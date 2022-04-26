@@ -25,38 +25,6 @@
 #include "../header/model.h"
 #include "../header/skybox.h"
 #include "../header/bloom.h"
-#include "../header/render.h"
-#include "../header/texture.h"
-
-unsigned int quadVAO = 0;
-unsigned int quadVBO;
-void renderQuad()
-{
-     if (quadVAO == 0)
-     {
-         float quadVertices[] = 
-         {
-             -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-             -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-              1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
-              1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
-         };
-
-         glGenVertexArrays(1, &quadVAO);
-         glGenBuffers(1, &quadVBO);
-         glBindVertexArray(quadVAO);
-         glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-         glEnableVertexAttribArray(0);
-         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    }
-    glBindVertexArray(quadVAO);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-    glBindVertexArray(0);
-}
-
 
 int main(int argc, char **argv)
 {
@@ -86,40 +54,14 @@ int main(int argc, char **argv)
     vector_world_up = vector_up;
 
     struct camera *item_camera = camera_malloc();
-    camera_constructor_assignment(item_camera,
-                                  vector_position,
-                                  vector_front,
-                                  vector_up,
-                                  vector_world_up,
-                                  YAW,
-                                  PITCH,
-                                  FOV,
-                                  ZNEAR,
-                                  ZFAR,
-                                  ASPECTRATIO,
-                                  SPEED,
-                                  SENSITIVITY);
+    camera_constructor_assignment(item_camera, vector_position, vector_front, vector_up, vector_world_up, YAW, PITCH, FOV, ZNEAR, ZFAR, ASPECTRATIO,SPEED, SENSITIVITY); 
 
     gsl_matrix *model = camera_get_model_matrix();
-
     struct event *item_event = event_malloc();
-    event_init(item_event, 
-               item_camera,
-               true,
-               0,
-               0,
-               0,
-               0,
-               0,
-               0,
-               0,
-               false,
-               false);
-
+    event_init(item_event, item_camera, true, 0, 0, 0, 0, 0, 0, 0, false, false);
 
     struct shader *model_shader = shader_malloc();
     struct shader *skybox_shader = shader_malloc();
-
     shader_init(skybox_shader, "shaders/skybox.vert", "shaders/skybox.frag", "r");
 
     SDL_ShowCursor(SDL_DISABLE);
@@ -132,7 +74,6 @@ int main(int argc, char **argv)
     skybox_item->cubemap_texture = cubemap_load(&skybox_item, 6);
     shader_use(skybox_shader);
     shader_set_int(skybox_shader, "skybox", 0);
-
 
     GLuint hdrFBO;
     glGenFramebuffers(1, &hdrFBO);
@@ -210,9 +151,6 @@ int main(int argc, char **argv)
     model_init(wireframe, NULL, "assets/models/car/wireframe/wireframe.obj", true);
 
     GLfloat aslk[16];
-    GLfloat rotate_wheels[16];
-    GLfloat ppl[16];
-    float move = 0.0f;
 
     struct shader *shader_bloom = shader_malloc();
     struct shader *shader_blur = shader_malloc();
@@ -225,6 +163,7 @@ int main(int argc, char **argv)
 
     
     struct bloom *bloom_item = bloom_malloc();
+    bloom_init(&bloom_item);
     bloom_hdr_buffer(&bloom_item);
     bloom_color_buffers(&bloom_item);
     bloom_rbo_depth(&bloom_item);
@@ -232,7 +171,6 @@ int main(int argc, char **argv)
     bloom_ping_pong_buffers(&bloom_item);
     bloom_light_positions(&bloom_item);
     bloom_light_colors(&bloom_item);
-
 
     shader_use(shader_bloom);
     shader_set_int(shader_bloom, "diffuseTexture", 0);
@@ -244,7 +182,6 @@ int main(int argc, char **argv)
     
     glEnable(GL_DEPTH_TEST);
 
-    glEnable( GL_MULTISAMPLE );
     float light_colors[6][3];
     light_colors[0][0] = 10.0f;
     light_colors[0][1] = 10.0f;
@@ -270,23 +207,6 @@ int main(int argc, char **argv)
     light_colors[5][1] = 0.0f;
     light_colors[5][2] = 0.0f;
 
-    float light_positions[4][3];
-    light_positions[0][0] = 0.0f;
-    light_positions[0][1] = 0.5f;
-    light_positions[0][2] = 1.5f;
-
-    light_positions[1][0] = 0.0f;
-    light_positions[1][1] = 3.5f;
-    light_positions[1][2] = 13.0f;
-
-    light_positions[2][0] = 3.0f;
-    light_positions[2][1] = 0.5f;
-    light_positions[2][2] = 1.0f;
-
-    light_positions[3][0] =-0.8f;
-    light_positions[3][1] = 2.4f;
-    light_positions[3][2] =-1.0f;
-
     struct shader *lighting_shader = shader_malloc();
     shader_init(lighting_shader, "shaders/material.vert", "shaders/material.frag", "r");
 
@@ -301,14 +221,14 @@ int main(int argc, char **argv)
         camera_set_cull_face_mode(event_get_cull_face(item_event));
         camera_set_polygon_mode(event_get_space(item_event));
         
-        GLfloat a[16]; 
-        matrix_to_array(camera_get_view_matrix(item_camera), a, 4, 4);
+        GLfloat view[16]; 
+        matrix_to_array(camera_get_view_matrix(item_camera), view, 4, 4);
 
         GLfloat vvvv[16]; 
         matrix_to_array(camera_get_view_matrix(item_camera), vvvv, 4, 4);
         
-        GLfloat p[16];
-        matrix_to_array(camera_get_projection_matrix(item_camera), p, 4, 4);
+        GLfloat projection[16];
+        matrix_to_array(camera_get_projection_matrix(item_camera), projection, 4, 4);
 
 
         glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -317,8 +237,8 @@ int main(int argc, char **argv)
         glBindFramebuffer(GL_FRAMEBUFFER, hdrFBO);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         shader_use(shader_bloom);
-        shader_set_matrix4f(shader_bloom, "projection", p);
-        shader_set_matrix4f(shader_bloom, "view", a);
+        shader_set_matrix4f(shader_bloom, "projection", projection);
+        shader_set_matrix4f(shader_bloom, "view", view);
         glActiveTexture(GL_TEXTURE0);
 
         shader_use(lighting_shader);
@@ -341,8 +261,8 @@ int main(int argc, char **argv)
         aslk[13] = 0.5f;
         shader_use(lighting_shader);
         shader_set_matrix4f(lighting_shader, "model", aslk);
-        shader_set_matrix4f(lighting_shader, "view", a);
-        shader_set_matrix4f(lighting_shader, "projection", p);
+        shader_set_matrix4f(lighting_shader, "view", view);
+        shader_set_matrix4f(lighting_shader, "projection", projection);
         shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
         model_draw(slk, lighting_shader);
 
@@ -354,8 +274,8 @@ int main(int argc, char **argv)
         aslk[13] = 0.5f;
         shader_use(model_shader);
         shader_set_matrix4f(model_shader, "model", aslk);
-        shader_set_matrix4f(model_shader, "view", a);
-        shader_set_matrix4f(model_shader, "projection", p);
+        shader_set_matrix4f(model_shader, "view", view);
+        shader_set_matrix4f(model_shader, "projection", projection);
         shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
         model_draw(koleso_front, model_shader);
 
@@ -365,35 +285,32 @@ int main(int argc, char **argv)
         aslk[13] = 0.5f;
         shader_use(model_shader);
         shader_set_matrix4f(model_shader, "model", aslk);
-        shader_set_matrix4f(model_shader, "view", a);
-        shader_set_matrix4f(model_shader, "projection", p);
+        shader_set_matrix4f(model_shader, "view", view);
+        shader_set_matrix4f(model_shader, "projection", projection);
         shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
         model_draw(koleso_back, model_shader);
         float move = 8.0f;
-        for(int i = 0; i < 10; i++)
-        {
-        }
 
         for(int i = 0; i < 10; i++)
         {
-        matrix_to_array(model, pw[i], 4, 4);
-        pw[i][0] = 0.5f;
-        pw[i][5] = 0.5f;
-        pw[i][10] = 0.5f;
-        pw[i][14] = move;
-        move += 8.0f;
-        shader_use(lighting_shader);
-        shader_set_matrix4f(lighting_shader, "model", pw[i]);
-        shader_set_matrix4f(lighting_shader, "view", a);
-        shader_set_matrix4f(lighting_shader, "projection", p);
-        model_draw(plane, lighting_shader);
+            matrix_to_array(model, pw[i], 4, 4);
+            pw[i][0] = 0.5f;
+            pw[i][5] = 0.5f;
+            pw[i][10] = 0.5f;
+            pw[i][14] = move;
+            move += 8.0f;
+            shader_use(lighting_shader);
+            shader_set_matrix4f(lighting_shader, "model", pw[i]);
+            shader_set_matrix4f(lighting_shader, "view", view);
+            shader_set_matrix4f(lighting_shader, "projection", projection);
+            model_draw(plane, lighting_shader);
 
-        shader_use(shader_light);
-        shader_set_matrix4f(shader_light, "model", pw[i]);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
-        shader_set_vec3_(shader_light, "lightColor", light_colors[1]);
-        model_draw(wireframe, shader_light);
+            shader_use(shader_light);
+            shader_set_matrix4f(shader_light, "model", pw[i]);
+            shader_set_matrix4f(shader_light, "view", view);
+            shader_set_matrix4f(shader_light, "projection", projection);
+            shader_set_vec3_(shader_light, "lightColor", light_colors[1]);
+            model_draw(wireframe, shader_light);
         }
 
         shader_use(shader_light);
@@ -402,8 +319,8 @@ int main(int argc, char **argv)
         pw[9][5] = 2.0f;
         pw[9][10] = 2.0f;
         shader_set_matrix4f(shader_light, "model", pw[9]);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[1]);
         model_draw(sp, shader_light);
 
@@ -411,39 +328,39 @@ int main(int argc, char **argv)
         aslk[5] = 0.05f;
         aslk[10] = 0.05f;
         shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
         model_draw(axes_front, shader_light);
 
         shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
         model_draw(axes_back, shader_light);
 
         shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[4]);
         model_draw(lamp_front, shader_light);
 
         shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[5]);
         model_draw(lamp_back_orange, shader_light);
 
         shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", a);
-        shader_set_matrix4f(shader_light, "projection", p);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
         shader_set_vec3_(shader_light, "lightColor", light_colors[4]);
         model_draw(lamp_back_yellow, shader_light);
 
         shader_use(skybox_shader);
         vvvv[3] = vvvv[7] = vvvv[11] = vvvv[12] = vvvv[13] = vvvv[14] = vvvv[15] = 0.0f;
         shader_set_matrix4f(skybox_shader, "view", vvvv);
-        shader_set_matrix4f(skybox_shader, "projection", p);
+        shader_set_matrix4f(skybox_shader, "projection", projection);
         cubemap_skybox_draw(&skybox_item);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -456,7 +373,7 @@ int main(int argc, char **argv)
             glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
             shader_set_int(shader_blur, "horizontal", horizontal);
             glBindTexture(GL_TEXTURE_2D, first_iteration ? colorBuffers[1] : pingpongColorbuffers[!horizontal]);
-            renderQuad();
+            bloom_render_quad(&bloom_item);
             horizontal = !horizontal;
             if(first_iteration)
                 first_iteration = false;
@@ -471,18 +388,17 @@ int main(int argc, char **argv)
         glBindTexture(GL_TEXTURE_2D, pingpongColorbuffers[!horizontal]);
         shader_set_int(shader_bloom_final, "bloom", true);
         shader_set_float(shader_bloom_final, "exposure", 1.0f);
-        renderQuad();
+        bloom_render_quad(&bloom_item);
 
         SDL_GL_SwapWindow(window);
     }
 
-/*    event_destroy(item_event);
-    shader_destroy(simple_shader);
+    event_destroy(item_event);
     camera_destroy(item_camera);
     free(item_camera);
     context_delete(&gl_context);
     SDL_DestroyWindow(window);
-    SDL_Quit();*/
+    SDL_Quit();
 
     return 0;
 }
