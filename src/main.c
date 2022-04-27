@@ -4,8 +4,6 @@
 
 #include "../include/glad/glad.h"
 #include "../include/SDL2/SDL.h" 
-#include "../include/SDL2/SDL_ttf.h"
-#include "../include/SDL2/SDL_image.h"
 #include "../include/GL/gl.h"
 #include "../include/gsl/gsl_blas.h"
 #include "../include/gsl/gsl_matrix_double.h"
@@ -60,7 +58,6 @@ int main(int argc, char **argv)
     struct event *item_event = event_malloc();
     event_init(item_event, item_camera, true, 0, 0, 0, 0, 0, 0, 0, false, false);
 
-    struct shader *model_shader = shader_malloc();
     struct shader *skybox_shader = shader_malloc();
     shader_init(skybox_shader, "shaders/skybox.vert", "shaders/skybox.frag", "r");
 
@@ -226,9 +223,6 @@ int main(int argc, char **argv)
     gsl_matrix *matrix_rotate = gsl_matrix_alloc(4, 4);
     gsl_matrix *matrix_res = gsl_matrix_alloc(4, 4);
     
-    gsl_matrix *matrix_scale = gsl_matrix_alloc(4, 4);
-    gsl_matrix *matrix_scale_res = gsl_matrix_alloc(4, 4);
-
     while(event_get_running(item_event))
     {
         event_handle(item_event);
