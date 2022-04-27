@@ -35,5 +35,6 @@ double event_get_y_off_set(struct event *);
 
 bool event_get_space(struct event *);
 bool event_get_cull_face(struct event *);
+bool event_get_flag(struct event *);
 
 #endif

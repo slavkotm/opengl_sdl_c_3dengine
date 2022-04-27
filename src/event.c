@@ -21,6 +21,7 @@ struct event
 
     bool space;
     bool cull_face;
+    bool flag;
 };
 
 struct event *event_malloc() 
@@ -58,6 +59,7 @@ void event_init(struct event *item_event,
 
     item_event->space = item_space;
     item_event->cull_face = item_cull_face;
+    item_event->flag = item_cull_face;
 };
 
 bool event_get_running(struct event *item_event) { return item_event->running; };
@@ -84,16 +86,23 @@ void event_handle(struct event *item_event)
             {
                 item_event->cull_face = !item_event->cull_face;
             }
+            if(item_event->event.key.keysym.sym == SDLK_p)
+            {
+                item_event->flag = !item_event->flag;
+            }
         }
-        if(item_event->event.type == SDL_MOUSEMOTION)
+        if(item_event->flag)
         {
-            item_event->new_x = item_event->event.motion.xrel;
-            item_event->new_y = item_event->event.motion.yrel;
-        }
-        if(item_event->event.type == SDL_MOUSEWHEEL)
-        {
-            camera_change_fov(item_event->item_camera, 
-                              item_event->event.wheel.y);
+            if(item_event->event.type == SDL_MOUSEMOTION)
+            {
+                item_event->new_x = item_event->event.motion.xrel;
+                item_event->new_y = item_event->event.motion.yrel;
+            }
+            if(item_event->event.type == SDL_MOUSEWHEEL)
+            {
+                camera_change_fov(item_event->item_camera, 
+                                  item_event->event.wheel.y);
+            }
         }
     }
 
@@ -138,4 +147,9 @@ bool event_get_space(struct event *item_event) { return item_event->space; };
 bool event_get_cull_face(struct event *item_event) 
 { 
     return item_event->cull_face;
+};
+
+bool event_get_flag(struct event *item_event)
+{
+    return item_event->flag;
 };

@@ -160,7 +160,6 @@ int main(int argc, char **argv)
     shader_init(shader_blur, "shaders/blur.vs", "shaders/blur.fs", "r");
     shader_init(shader_bloom_final, "shaders/bloom_final.vs", "shaders/bloom_final.fs", "r");
     shader_init(shader_light, "shaders/bloom.vs", "shaders/light_box.fs", "r");
-
     
     struct bloom *bloom_item = bloom_malloc();
     bloom_init(&bloom_item);
@@ -212,6 +211,18 @@ int main(int argc, char **argv)
 
     SDL_SetWindowFullscreen(window, SDL_WINDOW_FULLSCREEN);
     float pw[10][16];
+        
+    item_camera->position->data[0] = 0.515069f;
+    item_camera->position->data[1] = 0.386305f;
+    item_camera->position->data[2] = 2.650963f;
+
+    item_camera->front->data[0] = -0.177942f;
+    item_camera->front->data[1] = 0.004363f;
+    item_camera->front->data[2] = 0.984031f;
+
+    float dvig = 0.0f;
+    float dv = 0.0f;
+    float aslk1[16];
 
     while(event_get_running(item_event))
     {
@@ -230,6 +241,15 @@ int main(int argc, char **argv)
         GLfloat projection[16];
         matrix_to_array(camera_get_projection_matrix(item_camera), projection, 4, 4);
 
+        if(!event_get_flag(item_event))
+        {
+            item_camera->position->data[0] = 0.515069f;
+            item_camera->position->data[1] = 0.386305f;
+            item_camera->position->data[2] = 2.650963f + dvig;
+            item_camera->front->data[0] = -0.177942f;
+            item_camera->front->data[1] = 0.004363f;
+            item_camera->front->data[2] = 0.984031f;
+        }
 
         glad_glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glad_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -245,6 +265,8 @@ int main(int argc, char **argv)
         shader_set_vec3(lighting_shader, "light.position", 1.0f, 1.0f, 1.0f);
         shader_set_vec3(lighting_shader, "viewPos", item_camera->position->data[0], item_camera->position->data[1], item_camera->position->data[2]);
 
+        printf("%.6lf %.6lf %.6lf\n", item_camera->front->data[0], item_camera->front->data[1], item_camera->front->data[2]);
+
         shader_set_vec3(lighting_shader, "light.ambient", 0.12f, 0.01f, 0.2f);
         shader_set_vec3(lighting_shader, "light.diffuse", 0.6f, 0.5f, 1.0f);
         shader_set_vec3(lighting_shader, "light.specular", 2.0f, 0.8f, 1.898f);
@@ -258,7 +280,9 @@ int main(int argc, char **argv)
         aslk[0] = 0.05f;
         aslk[5] = 0.05f;
         aslk[10] = 0.05f;
-        aslk[13] = 0.5f;
+        aslk[12] = -0.25f;
+        aslk[13] = 0.23f;
+        aslk[14] = 5.0f + dvig;
         shader_use(lighting_shader);
         shader_set_matrix4f(lighting_shader, "model", aslk);
         shader_set_matrix4f(lighting_shader, "view", view);
@@ -266,30 +290,51 @@ int main(int argc, char **argv)
         shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
         model_draw(slk, lighting_shader);
 
+        matrix_to_array(model, aslk1, 4, 4);
+        aslk1[0] = 0.05f;
+        aslk1[5] = 0.05;// * cos(dv * M_PI / 180.0);
+//        aslk1[6] = sin(dv * M_PI / 180.0);
+//        aslk1[9] = -sin(dv * M_PI / 180.0);
+        aslk1[10] = 0.05;//*cos(dv * M_PI / 180.0);
+        aslk1[12] = -0.185f;
+        aslk1[13] = 0.115f;
+        aslk1[14] = 5.515f + dvig;
+        dv += 0.2f;
+        shader_use(lighting_shader);
+        shader_set_matrix4f(lighting_shader, "model", aslk1);
+        shader_set_matrix4f(lighting_shader, "view", view);
+        shader_set_matrix4f(lighting_shader, "projection", projection);
+        shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
+        model_draw(koleso_front, lighting_shader);
 
-        matrix_to_array(model, aslk, 4, 4);
-        aslk[0] = 0.05f;
-        aslk[5] = 0.05f;
-        aslk[10] = 0.05f;
-        aslk[13] = 0.5f;
-        shader_use(model_shader);
-        shader_set_matrix4f(model_shader, "model", aslk);
-        shader_set_matrix4f(model_shader, "view", view);
-        shader_set_matrix4f(model_shader, "projection", projection);
-        shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
-        model_draw(koleso_front, model_shader);
+        shader_use(shader_light);
+        shader_set_matrix4f(shader_light, "model", aslk1);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
+        model_draw(axes_front, shader_light);
 
-        aslk[0] = 0.05f;
-        aslk[5] = 0.05f;
-        aslk[10] = 0.05f;
-        aslk[13] = 0.5f;
-        shader_use(model_shader);
-        shader_set_matrix4f(model_shader, "model", aslk);
-        shader_set_matrix4f(model_shader, "view", view);
-        shader_set_matrix4f(model_shader, "projection", projection);
-        shader_set_bool(model_shader, "wireframemode", event_get_space(item_event));
-        model_draw(koleso_back, model_shader);
+        aslk1[0] = 0.05f;
+        aslk1[5] = 0.05f;
+        aslk1[10] = 0.05f;
+        aslk1[12] = -0.185f;
+        aslk1[13] = 0.135f;
+        aslk1[14] = 4.515f + dvig;
+        shader_use(lighting_shader);
+        shader_set_matrix4f(lighting_shader, "model", aslk1);
+        shader_set_matrix4f(lighting_shader, "view", view);
+        shader_set_matrix4f(lighting_shader, "projection", projection);
+        shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
+        model_draw(koleso_back, lighting_shader);
+
+        shader_use(shader_light);
+        shader_set_matrix4f(shader_light, "model", aslk1);
+        shader_set_matrix4f(shader_light, "view", view);
+        shader_set_matrix4f(shader_light, "projection", projection);
+        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
+        model_draw(axes_back, shader_light);
         float move = 8.0f;
+        //dvig += 0.09f;
 
         for(int i = 0; i < 10; i++)
         {
@@ -327,17 +372,7 @@ int main(int argc, char **argv)
         aslk[0] = 0.05f;
         aslk[5] = 0.05f;
         aslk[10] = 0.05f;
-        shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", view);
-        shader_set_matrix4f(shader_light, "projection", projection);
-        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
-        model_draw(axes_front, shader_light);
 
-        shader_set_matrix4f(shader_light, "model", aslk);
-        shader_set_matrix4f(shader_light, "view", view);
-        shader_set_matrix4f(shader_light, "projection", projection);
-        shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
-        model_draw(axes_back, shader_light);
 
         shader_set_matrix4f(shader_light, "model", aslk);
         shader_set_matrix4f(shader_light, "view", view);
