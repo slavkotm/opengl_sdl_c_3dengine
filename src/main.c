@@ -223,6 +223,11 @@ int main(int argc, char **argv)
     float dvig = 0.0f;
     float dv = 0.0f;
     float aslk1[16];
+    gsl_matrix *matrix_rotate = gsl_matrix_alloc(4, 4);
+    gsl_matrix *matrix_res = gsl_matrix_alloc(4, 4);
+    
+    gsl_matrix *matrix_scale = gsl_matrix_alloc(4, 4);
+    gsl_matrix *matrix_scale_res = gsl_matrix_alloc(4, 4);
 
     while(event_get_running(item_event))
     {
@@ -276,6 +281,22 @@ int main(int argc, char **argv)
         shader_set_vec3(lighting_shader, "material.specular", 0.774597f, 0.774597f, 0.774597f);
         shader_set_float(lighting_shader, "material.shininess", 76.8f);
 
+        gsl_matrix_set_zero(matrix_rotate);
+        gsl_matrix_set(matrix_rotate, 0, 0, 1);
+        gsl_matrix_set(matrix_rotate, 1, 1, cos(dvig * M_PI * 360.0 / 180.0));
+        gsl_matrix_set(matrix_rotate, 1, 2, sin(dvig * M_PI * 360.0/ 180.0));
+        gsl_matrix_set(matrix_rotate, 2, 1,-sin(dvig * M_PI * 360.0/ 180.0));
+        gsl_matrix_set(matrix_rotate, 2, 2, cos(dvig * M_PI * 360.0/ 180.0));
+        gsl_matrix_set(matrix_rotate, 3, 3, 1);
+
+        gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1, model, matrix_rotate, 0, matrix_res);
+
+        gsl_matrix_set(matrix_res, 0, 0, 0.05f * gsl_matrix_get(matrix_res, 0, 0));
+        gsl_matrix_set(matrix_res, 1, 1, 0.05f * gsl_matrix_get(matrix_res, 1, 1));
+        gsl_matrix_set(matrix_res, 1, 2, 0.05f * gsl_matrix_get(matrix_res, 1, 2));
+        gsl_matrix_set(matrix_res, 2, 1, 0.05f * gsl_matrix_get(matrix_res, 2, 1));
+        gsl_matrix_set(matrix_res, 2, 2, 0.05f * gsl_matrix_get(matrix_res, 2, 2));
+
         matrix_to_array(model, aslk, 4, 4);
         aslk[0] = 0.05f;
         aslk[5] = 0.05f;
@@ -290,12 +311,7 @@ int main(int argc, char **argv)
         shader_set_bool(lighting_shader, "wireframemode", event_get_space(item_event));
         model_draw(slk, lighting_shader);
 
-        matrix_to_array(model, aslk1, 4, 4);
-        aslk1[0] = 0.05f;
-        aslk1[5] = 0.05;// * cos(dv * M_PI / 180.0);
-//        aslk1[6] = sin(dv * M_PI / 180.0);
-//        aslk1[9] = -sin(dv * M_PI / 180.0);
-        aslk1[10] = 0.05;//*cos(dv * M_PI / 180.0);
+        matrix_to_array(matrix_res, aslk1, 4, 4);
         aslk1[12] = -0.185f;
         aslk1[13] = 0.115f;
         aslk1[14] = 5.515f + dvig;
@@ -314,9 +330,6 @@ int main(int argc, char **argv)
         shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
         model_draw(axes_front, shader_light);
 
-        aslk1[0] = 0.05f;
-        aslk1[5] = 0.05f;
-        aslk1[10] = 0.05f;
         aslk1[12] = -0.185f;
         aslk1[13] = 0.135f;
         aslk1[14] = 4.515f + dvig;
@@ -334,7 +347,7 @@ int main(int argc, char **argv)
         shader_set_vec3_(shader_light, "lightColor", light_colors[3]);
         model_draw(axes_back, shader_light);
         float move = 8.0f;
-        //dvig += 0.09f;
+        dvig += 0.03f;
 
         for(int i = 0; i < 10; i++)
         {
