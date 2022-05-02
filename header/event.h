@@ -1,6 +1,6 @@
 #ifndef EVENT_INCLUDED
 #define EVENT_INCLUDED
-#include "../include/SDL2/include/SDL.h"
+#include "../include/SDL2/SDL.h"
 #include "../header/camera.h"
 #include <stdbool.h>
 #include <stdlib.h>
