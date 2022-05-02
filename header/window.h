@@ -1,6 +1,6 @@
 #ifndef WINDOW_INCLUDED
 #define WINDOW_INCLUDED
-#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/include/SDL.h"
 
 #define SCREEN_WIDTH 1920
 #define SCREEN_HEIGHT 1080
