@@ -1,6 +1,6 @@
 #ifndef BLOOM_INCLUDED
 #define BLOOM_INCLUDED
-#include "../include/glad/glad.h"
+#include "../include/glad/include/glad/glad.h"
 #include "../include/GL/gl.h"
 #include "../include/stb/stb_image.h"
 #include "../header/window.h"

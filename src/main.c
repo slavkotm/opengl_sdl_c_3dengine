@@ -3,7 +3,7 @@
 #include <stdbool.h>
 
 #include "../include/glad/include/glad/glad.h"
-#include "../include/SDL2/SDL.h" 
+#include "../include/SDL2/include/SDL.h" 
 #include "../include/GL/gl.h"
 #include "../include/gsl/gsl_blas.h"
 #include "../include/gsl/gsl_matrix_double.h"

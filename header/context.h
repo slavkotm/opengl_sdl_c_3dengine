@@ -1,6 +1,6 @@
 #ifndef CONTEXT_INCLUDED
 #define CONTEXT_INCLUDED
-#include "../include/SDL2/SDL.h"
+#include "../include/SDL2/include/SDL.h"
 
 #define MAJOR_VERSION 3
 #define MINOR_VERSION 3
