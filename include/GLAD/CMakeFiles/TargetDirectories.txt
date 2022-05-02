@@ -1,0 +1,4 @@
+/home/pirozhok/glad/CMakeFiles/rebuild_cache.dir
+/home/pirozhok/glad/CMakeFiles/glad.dir
+/home/pirozhok/glad/CMakeFiles/edit_cache.dir
+/home/pirozhok/glad/CMakeFiles/glad-generate-files.dir
